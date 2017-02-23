@@ -12,11 +12,6 @@ In the first step the function is constructed, initialized and
 constants pre-evaluated. In the second step the actual value
 is passed into the function, using the arguments of the first step.
 
-
-Definitions and inspiration from:
-Fuzzy Logic and Control: Software and Hardware Applications, Volume 2
-Mohammad Jamshidi; Nader Vadiee; Timothy J. Ross   1993
-
 Definitions
 -----------
 These functions are used to determine the *membership* of a value x in a fuzzy-
@@ -40,8 +35,8 @@ from math import exp, log, sqrt
 def inv(func):
     """Invert the given function within the unit-interval.
     >>> f = inv(constant(0))
-    >>> f(0.5)
-    1
+    >>> f(0.7)
+    0.3
     """
 
     def f(x):
