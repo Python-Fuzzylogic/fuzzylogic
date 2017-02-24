@@ -1,12 +1,10 @@
-from unittest import Test
 
+from hypothesis import given, strategies as st
 
+from fuzzy import functions as fun
 
-class DomainTests(unittest.TestCase):
-
-    @unittest.expectedFailure
-    def test(self):
-        self.fail()
-
-if __name__ == '__main__':
-    unittest.main()
+@given(st.floats(min_value=0, max_value=1), 
+       st.floats(min_value=0, max_value=1))
+def test_constant(c, r):
+    f = fun.constant(c)
+    assert f(r) == c

@@ -47,7 +47,7 @@ def inv(func):
 def constant(c):
     """Always return the same value, no matter the input.
     >>> f = constant(1)
-    >>> f(3)
+    >>> f(0)
     1
     """
 
