@@ -32,6 +32,12 @@ In a fuzzy set with one and only one m == 1, this element is called 'prototype'.
 from math import exp, log, sqrt
 
 
+def noop():
+    """Do nothing and return the value as is."""
+    def f(x):
+        return x
+    return f
+
 def inv(func):
     """Invert the given function within the unit-interval.
     >>> f = inv(constant(0))
