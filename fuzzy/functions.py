@@ -38,16 +38,20 @@ def noop():
         return x
     return f
 
-def inv(func):
-    """Invert the given function within the unit-interval.
+def inv(func=None):
+    """Invert the given function or value within the unit-interval.
     >>> f = inv(constant(0))
     >>> f(0.7)
     0.3
     """
 
-    def f(x):
+    def f_func(x):
         return 1 - func(x)
-    return f
+    
+    def f_value(x):
+        return 1 - x
+    
+    return f_func if func is not None else f_value
 
 
 def constant(c):
@@ -57,16 +61,13 @@ def constant(c):
     1
     """
 
-    if not(0 <= c <= 1):
-        raise ValueError
-
     def f(x):
         return c
     return f
 
 
-def alpha(func, ceiling=1, floor=0):
-    """Function to clip other functions.
+def alpha(func=None, floor=0, ceiling=1):
+    """Function to clip functions or values.
     This is used to either cut off the upper or lower part of a graph.
 
     >>> s = singleton(2)
@@ -83,12 +84,19 @@ def alpha(func, ceiling=1, floor=0):
     if ceiling < floor:
         raise ValueError('ceiling must not be less than floor.')
 
-    def f(x):
+    def f_func(x):
         if func(x) >= ceiling:
             return ceiling
         if func(x) <= floor:
             return floor
-    return f
+    
+    def f_value(x):
+        if x >= ceiling:
+            return ceiling
+        if x <= floor:
+            return floor
+        
+    return f_value if func is None else f_func
 
 
 def singleton(p, non_p_m=0, p_m=1):
