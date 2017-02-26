@@ -1,5 +1,5 @@
 
-from hypothesis import given, strategies as st
+from hypothesis import given, strategies as st, assume
 
 from fuzzy import functions as fun
 
@@ -18,8 +18,6 @@ def test_invert(x):
     f = fun.inv(n)
     assert f(x) == 1 - x
     
-
-
 @given(st.floats(allow_nan=False, allow_infinity=False), 
        st.floats(allow_nan=False, allow_infinity=False))
 def test_constant(c, r):
@@ -31,12 +29,12 @@ def test_constant(c, r):
        st.floats(min_value=0, max_value=1),
        st.floats(allow_nan=False))
 def test_alpha(lower, upper, x):
-    if lower >= upper:
-        return
-    f = fun.alpha(floor=lower, ceiling=upper)
+    assume(lower < upper)
+        
+    f = fun.alpha(lower, upper)
     if x <= lower:
         assert f(x) == lower
-    if x >= upper:
+    elif x >= upper:
         assert f(x) == upper
     else:
         assert f(x) == x

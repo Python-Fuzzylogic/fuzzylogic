@@ -66,7 +66,7 @@ def constant(c):
     return f
 
 
-def alpha(func=None, floor=0, ceiling=1):
+def alpha(floor=0, ceiling=1, func=None):
     """Function to clip functions or values.
     This is used to either cut off the upper or lower part of a graph.
 
@@ -77,24 +77,24 @@ def alpha(func=None, floor=0, ceiling=1):
     >>> g(2)
     0.8
     """
-    if not (0 <= ceiling <= 1):
-        raise ValueError('ceiling invalid.')
-    if not (0 <= floor <= 1):
-        raise ValueError('floor invalid.')
-    if ceiling < floor:
-        raise ValueError('ceiling must not be less than floor.')
-
+    if floor >= ceiling:
+        raise UserWarning("floor must be lower than ceiling")
+    
     def f_func(x):
         if func(x) >= ceiling:
             return ceiling
-        if func(x) <= floor:
+        elif func(x) <= floor:
             return floor
+        else:
+            return x
     
     def f_value(x):
         if x >= ceiling:
             return ceiling
-        if x <= floor:
+        elif x <= floor:
             return floor
+        else: 
+            return x
         
     return f_value if func is None else f_func
 

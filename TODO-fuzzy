@@ -2,3 +2,4 @@ do: build a testcase suite
 ---
 do: review functions
 ---
+do: Set.plot should always plot between 0 and 1
