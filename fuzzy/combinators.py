@@ -3,8 +3,8 @@
 -----------
 COMBINATORS
 -----------
-Linguistic terms (FuzzySets) are combined with these functions
-within rules.
+Linguistic terms (membership functions of two different FuzzySets) 
+are combined with these functions to implement rules.
 
 a and b are functions.
 """
@@ -40,12 +40,14 @@ def bounded_sum(a, b):
 
 
 def lukasiewicz_OR(a, b):
+    """OR variant."""
     def f(x):
         return max(0, a(x) + b(x) - 1)
     return f
 
 
 def lukasiewicz_AND(a, b):
+    """AND variant."""
     def f(x):
         return min(1, a(x) + b(x))
     return f

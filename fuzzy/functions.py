@@ -1,7 +1,7 @@
 
 """
 --------------------
-MEMBERSHIP-FUNCTIONS
+FUZZY FUNCTIONS
 --------------------
 Collection of general-purpose functions that map a value X onto the
 unit-interval [0,1]. These functions work as closures. The inner function uses
@@ -31,31 +31,30 @@ In a fuzzy set with one and only one m == 1, this element is called 'prototype'.
 
 from math import exp, log, sqrt
 
+#####################
+# SPECIAL FUNCTIONS #
+#####################
+
+def inv(g):
+    """Invert the given function within the unit-interval.
+    For sets, the ~ operator uses this. It is equivalent to the TRUTH value of FALSE.
+    """
+    def f(x):
+        return 1 - g(x)
+    return f
+
 
 def noop():
-    """Do nothing and return the value as is."""
+    """Do nothing and return the value as is.
+    Useful for testing.
+    """
     def f(x):
         return x
     return f
 
-def inv(func=None):
-    """Invert the given function or value within the unit-interval.
-    >>> f = inv(constant(0))
-    >>> f(0.7)
-    0.3
-    """
-
-    def f_func(x):
-        return 1 - func(x)
-    
-    def f_value(x):
-        return 1 - x
-    
-    return f_func if func is not None else f_value
-
-
 def constant(c):
     """Always return the same value, no matter the input.
+    Useful for testing.
     >>> f = constant(1)
     >>> f(0)
     1
@@ -66,38 +65,27 @@ def constant(c):
     return f
 
 
-def alpha(floor=0, ceiling=1, func=None):
-    """Function to clip functions or values.
+def alpha(floor, ceiling, func):
+    """Function to clip a function.
     This is used to either cut off the upper or lower part of a graph.
-
-    >>> s = singleton(2)
-    >>> g = alpha(s, 0.8, 0.2)
-    >>> g(0)
-    0.2
-    >>> g(2)
-    0.8
+    Actually, this is more like a hedge but doesn't make sense for sets.
     """
-    if floor >= ceiling:
-        raise UserWarning("floor must be lower than ceiling")
+    assert floor <= ceiling
+    assert 0 <= floor
+    assert 1 >= ceiling
     
-    def f_func(x):
+    def f(x):
         if func(x) >= ceiling:
             return ceiling
         elif func(x) <= floor:
             return floor
-        else:
-            return x
-    
-    def f_value(x):
-        if x >= ceiling:
-            return ceiling
-        elif x <= floor:
-            return floor
         else: 
-            return x
-        
-    return f_value if func is None else f_func
+            return func(x)
+    return f
 
+########################
+# MEMBERSHIP FUNCTIONS #
+########################
 
 def singleton(p, non_p_m=0, p_m=1):
     """A single spike.
@@ -112,11 +100,8 @@ def singleton(p, non_p_m=0, p_m=1):
     1
     """
 
-    if not(0 <= p_m <= 1):
-        raise ValueError('p_m invalid.')
-
-    if not(0 <= non_p_m <= 1):
-        raise ValueError('non_p_m invalid.')
+    assert 0 <= p_m <= 1
+    assert 0 <= non_p_m <= 1
 
     def f(x):
         return p_m if x == p else non_p_m
@@ -502,190 +487,6 @@ def gauss(b, p, p_m=1):
 
     def f(x):
         return p_m * exp(-b * (x - p)**2)
-
-    return f
-
-
-"""
------------
-COMBINATORS
------------
-Linguistic terms (FuzzySets) are combined with these functions
-within rules.
-
-a and b are functions.
-"""
-
-
-def MIN(a, b):
-    """Simple AND of two functions a and b."""
-    def f(x):
-        return min(a(x), b(x))
-    return f
-
-
-def MAX(a, b):
-    """Simple OR of two functions a and x."""
-    def f(x):
-        return max(a(x), b(x))
-    return f
-
-
-def product(a, b):
-    """AND variant."""
-    def f(x):
-        return a(x) * b(x)
-    return f
-
-
-def bounded_sum(a, b):
-    """OR variant."""
-    def f(x):
-        a_x, b_x = a(x), b(x)
-        return a_x + b_x - a_x * b_x
-    return f
-
-
-def lukasiewicz_OR(a, b):
-    def f(x):
-        return max(0, a(x) + b(x) - 1)
-    return f
-
-
-def lukasiewicz_AND(a, b):
-    def f(x):
-        return min(1, a(x) + b(x))
-    return f
-
-
-def einstein_sum(a, b):
-    """OR variant."""
-    def f(x):
-        a_x, b_x = a(x), b(x)
-        return (a_x + b_x) / (1 + a_x * b_x)
-    return f
-
-
-def einstein_product(a, b):
-    """AND variant."""
-    def f(x):
-        a_x, b_x = a(x), b(x)
-        return (a_x * b_x) / (2 - (a_x + b_x - a_x * b_x))
-    return f
-
-
-def hamacher_sum(a, b):
-    """OR variant."""
-    def f(x):
-        a_x, b_x = a(x), b(x)
-        return (a_x + b_x - 2 * a_x * b_x) / (1 - a_x * b_x)
-    return f
-
-
-def hamacher_product(a, b):
-    """AND variant."""
-    def f(x):
-        a_x, b_x = a(x), b(x)
-        return (a_x * b_x) / (a_x + b_x - a_x * b_x)
-
-
-def lambda_op(a, b, l):
-    """A 'compensatoric' operator, combining AND with OR by a weighing factor l.
-    """
-    def f(x):
-        a_x, b_x = a(x), b(x)
-        return l * (a_x * b_x) + (1 - l) * (a_x + b_x - a_x * b_x)
-    return f
-
-
-def gamma_op(a, b, g):
-    """A 'compensatoric' operator, combining AND with OR by a weighing factor g.
-    g (gamma-factor)
-        0 < g < 1 (g == 0 -> AND; g == 1 -> OR)
-    """
-    if not(0 <= g <= 1):
-        raise ValueError
-
-    def f(x):
-        a_x, b_x = a(x), b(x)
-        return (a_x * b_x) ** (1 - g) * ((1 - a_x) * (1 - b_x)) ** g
-
-    return f
-
-
-"""
-------
-HEDGES
-------
-Lingual hedges modify curves describing truthvalues.
-These are special since they work with functions AND sets.
-"""
-
-
-def very(g):
-    def f(x):
-        return g(x) ** 2
-    return f
-
-
-def plus(g):
-    def f(x):
-        return g(x) ** 1.25
-    return f
-
-
-def minus(g):
-    def f(x):
-        return g(x) ** 0.75
-    return f
-
-"""
--------------------
-TRUTH QUALIFICATION
--------------------
-Functions that transform a given membership value to a truth value.
-"""
-
-
-def TRUE():
-    """The membership-value is its own truth-value."""
-    def f(m):
-        return m
-    return f
-
-
-def VERY_TRUE():
-    """Part of a circle in quadrant IV."""
-    def f(m):
-        return -sqrt(1 - m ** 2)
-    return f
-
-
-def FAIRLY_TRUE():
-    """Part of a circle in quadrant II."""
-    def f(m):
-        return sqrt(1 - (1 - m) ** 2)
-    return f
-
-
-def FALSE():
-    """The opposite of TRUE."""
-    def f(m):
-        return 1 - m
-    return f
-
-
-def VERY_FALSE():
-    """Part of a circle in quadrant III."""
-    def f(m):
-        return -sqrt(1 - (1 - m) ** 2)
-    return f
-
-
-def FAIRLY_FALSE():
-    """Part of a circle in quadrant I."""
-    def f(m):
-        return sqrt(1 - m ** 2)
     return f
 
 
