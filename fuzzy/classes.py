@@ -1,6 +1,6 @@
 
 import matplotlib.pyplot as plt
-from numpy import arange
+from numpy import arange, fromiter
 
 from fuzzy.functions import inv
 from fuzzy.combinators import MAX, MIN, product, bounded_sum
@@ -157,6 +157,13 @@ class Set:
         R = arange(low, high, res)
         V = [self.func(x) for x in R]
         plt.plot(R, V)
+    
+    def array(self):
+        R = arange(self.domain.low, self.domain.high, self.domain.res)
+        # arange may not be ideal for this
+        return fromiter((self.func(x) for x in arange(self.domain.low,
+                                                     self.domain.high,
+                                                     self.domain.res)), float)
 
 
 class Rule:
