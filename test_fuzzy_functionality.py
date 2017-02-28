@@ -1,3 +1,4 @@
+
 """
 Functional test of the fuzzylogic lib 'fuzzy'.
 """

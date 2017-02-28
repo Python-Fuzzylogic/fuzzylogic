@@ -4,6 +4,8 @@
 TRUTH QUALIFICATION
 -------------------
 Functions that transform a given membership value to a truth value.
+
+How this can be useful? Well.. 
 """
 
 

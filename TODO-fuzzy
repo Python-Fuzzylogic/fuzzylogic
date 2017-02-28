@@ -1,5 +1,15 @@
-do: build a testcase suite
+do: build a #testcase suite
 ---
-do: review functions
+do: MUST review #functions
 ---
-do: Set.plot should always plot between 0 and 1
+do: #Set.plot SHOULD always plot between 0 and 1
+---
+do: #Set.plot SHOULD always plot the full set range
+---
+do: MUST fix #Domain._sets (should be either set OR dict)
+until: 2017-3-1
+---
+do: check tests
+every: day
+---
+do: SHOULD find examples for truth functions

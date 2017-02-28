@@ -1,27 +1,9 @@
 
-"""
-Fuzzy Logic for Python 3.
-
-Usage:
-1) Define a Domain and specify the measurable range & resolution.
-2) Define some fuzzysets ("adjectives") as attributes that describe ranges within
-the domain using Set().
-3) You can combine fuzzysets using fuzzy logic operators (~, &, |, +, *) to
-define derived fuzzysets.
-4) Now suppose you have a value x. Call the fuzzyset(x) directly to produce a
-membership value or
-call the domain with it to get a dictionary of memberships.
-5) To really put these to work, you will want to map membership values of one or
-more domains onto another domain, producing "real world" values again that can
-be used to control things. This is called inference (combining domains) and
-defuzzification (turning membership values back into measurables).
-"""
-
 import matplotlib.pyplot as plt
 from numpy import arange
 
-from functions import inv
-from combinators import MAX, MIN, product, bounded_sum
+from fuzzy.functions import inv
+from fuzzy.combinators import MAX, MIN, product, bounded_sum
 
 
 
@@ -125,44 +107,43 @@ class Set:
 
     Sets that are returned from one of the operations are 'derived sets' or
     'Superfuzzysets' according to Zadeh.
+    
+    Note that most checks are merely assertions that can be optimized away.
+    DO NOT RELY on these checks and use tests to make sure that only valid calls are made.
     """
     def __init__(self, domain:Domain, func:callable, ops:dict=None):
         self.func = func
         assert self.func is not None
         self.ops = ops
-        if not isinstance(domain, Domain):
-            raise AttributeError
+        assert isinstance(domain, Domain), "Must be used with a Domain."
         self.domain = domain
         self.domain._sets.add(self)
 
     def __call__(self, x):
+        assert self.domain.low <= x <= self.domain.high, "value outside domain"
         return self.func(x)
 
     def __invert__(self):
         return Set(self.domain, inv(self.func))
 
     def __and__(self, other):
-        if self.domain is not other.domain:
-            raise UserWarning
+        assert self.domain is other.domain, "Cannot combine sets of different domains."
         return Set(self.domain, MIN(self.func, other.func))
 
     def __or__(self, other):
-        if self.domain is not other.domain:
-            raise UserWarning
+        assert self.domain is other.domain, "Cannot combine sets of different domains."
         return Set(self.domain, MAX(self.func, other.func))
 
     def __mul__(self, other):
-        if self.domain is not other.domain:
-            raise UserWarning
+        assert self.domain is other.domain, "Cannot combine sets of different domains."
         return Set(self.domain, product(self.func, other.func))
 
-    def __sum__(self, other):
-        if self.domain is not other.domain:
-            raise UserWarning
+    def __add__(self, other):
+        assert self.domain is other.domain, "Cannot combine sets of different domains."
         return Set(self.domain, bounded_sum(self.func, other.func))
 
     def __pow__(self, power):
-        """pow is used with lingual hedges as defined in fuzzy.functions"""
+        """pow is used with hedges"""
         return Set(self.domain, lambda x: pow(self.func(x), power))
 
     def plot(self, low=None, high=None, res=None):
@@ -175,8 +156,6 @@ class Set:
         res = self.domain.res if res is None else res
         R = arange(low, high, res)
         V = [self.func(x) for x in R]
-        #print(R)
-        #print(V)
         plt.plot(R, V)
 
 

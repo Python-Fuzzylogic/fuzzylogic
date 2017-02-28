@@ -399,8 +399,8 @@ def bounded_sigmoid(low, high):
     >>> round(f(-100000), 2)
     0.0
     """
-    if high < low:
-        raise ValueError('high must not be less than low.')
+    assert low < high, 'high must not be less than low'
+    
     k = -(4. * log(3)) / (low - high)
     o = 9 * exp(low * k)
 

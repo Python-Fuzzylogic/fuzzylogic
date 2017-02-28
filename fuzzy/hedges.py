@@ -7,7 +7,7 @@ Lingual hedges modify curves describing truthvalues.
 These work with sets only. Meta-functionality is deprecated.
 """
 
-from classes import Set
+from fuzzy.classes import Set
 from warnings import warn
 
 def very(g):
