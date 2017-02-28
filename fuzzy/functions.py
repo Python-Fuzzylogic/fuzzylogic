@@ -29,7 +29,7 @@ In a fuzzy set with one and only one m == 1, this element is called 'prototype'.
 """
 
 
-from math import exp, log, sqrt
+from math import exp, log, sqrt, isinf
 
 #####################
 # SPECIAL FUNCTIONS #
@@ -178,17 +178,37 @@ def bounded_linear(low_bound, high_bound, core_m=1, unsupported_m=0):
     1.0
     """
     assert high_bound > low_bound, 'high must not be less than low.'
-    assert core_m != unsupported_m, "core_m must differ from unsupported_m"
+    assert core_m > unsupported_m, "core_m must differ from unsupported_m"
 
     gradient = (core_m - unsupported_m) / (high_bound - low_bound)
-
+    
+    # special cases found by hypothesis
+    
+    def g_0(x):
+        return (core_m + unsupported_m) / 2
+    
+    if gradient == 0:
+        return g_0
+    
+    def g_inf(x):
+        asympt = (high_bound + low_bound) / 2
+        if x < asympt:
+            return unsupported_m
+        elif x > asympt:
+            return core_m
+        else:
+            return (core_m + unsupported_m) / 2
+    
+    if isinf(gradient):
+        return g_inf
+    
     def f(x):
-        m = gradient * (x - low_bound) + unsupported_m
-        if m < 0:
+        y = gradient * (x - low_bound) + unsupported_m
+        if y < 0:
             return 0.
-        if m > 1:
+        if y > 1:
             return 1.
-        return m
+        return y
     return f
 
 
@@ -198,8 +218,7 @@ def R(left, right):
     USE THE S() FUNCTION FOR NEGATIVE SLOPE.
     """
 
-    if left >= right:
-        raise ValueError("left must be less than right.")
+    assert left < right, "left must be less than right."
 
     def f(x):
         if x < left:
@@ -247,8 +266,7 @@ def rectangular(left, right, core_m=1, unsupported_m=0):
         "height" of the rectangle
     """
 
-    if left > right:
-        raise ValueError('left must not be greater than right.')
+    assert left < right, 'left must not be greater than right.'
 
     def f(x):
         if x < left:

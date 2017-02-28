@@ -63,6 +63,24 @@ class Test_Functions(TestCase):
       st.floats(min_value=0, max_value=1))
     def test_bounded_linear(self, x, low_bound, high_bound, core_m, unsupported_m):
         assume(low_bound < high_bound)
-        assume(core_m != unsupported_m)
+        assume(core_m > unsupported_m)
         f = fun.bounded_linear(low_bound, high_bound, core_m, unsupported_m)
+        assert (0 <= f(x) <= 1)
+
+    @given(st.floats(allow_nan=False),
+            st.floats(allow_nan=False, allow_infinity=False),
+            st.floats(allow_nan=False, allow_infinity=False),
+           )
+    def test_R(self, x, left, right):
+        assume(left < right)
+        f = fun.R(left, right)
+        assert (0 <= f(x) <= 1)
+        
+    @given(st.floats(allow_nan=False),
+        st.floats(allow_nan=False, allow_infinity=False),
+        st.floats(allow_nan=False, allow_infinity=False),
+       )
+    def test_S(self, x, left, right):
+        assume(left < right)
+        f = fun.S(left, right)
         assert (0 <= f(x) <= 1)
