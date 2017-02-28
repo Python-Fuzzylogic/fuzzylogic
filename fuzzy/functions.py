@@ -177,8 +177,8 @@ def bounded_linear(low_bound, high_bound, core_m=1, unsupported_m=0):
     >>> f(4)
     1.0
     """
-    if high_bound <= low_bound:
-        raise ValueError('high must not be less than low.')
+    assert high_bound > low_bound, 'high must not be less than low.'
+    assert core_m != unsupported_m, "core_m must differ from unsupported_m"
 
     gradient = (core_m - unsupported_m) / (high_bound - low_bound)
 
