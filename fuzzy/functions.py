@@ -109,17 +109,10 @@ def singleton(p, non_p_m=0, p_m=1):
     return f
 
 
-def linear(a=0, b=0):
+def linear(m:float=0, b:float=0) -> callable:
     """A textbook linear function with y-axis section and gradient.
-    f(x) = a*x + b
+    f(x) = m*x + b
     BUT CLIPPED.
-
-    variables
-    --------
-    b: float
-        y-axis section for f(0)
-    a: float
-        gradient - if a == 0, the function is constant
 
     >>> f = linear(1, -1)
     >>> f(-2)   # should be -3 but clipped
@@ -135,13 +128,14 @@ def linear(a=0, b=0):
     >>> f(3)    # should be 2 but clipped
     1
     """
-    def f(x):
-        m = a * x + b
-        if m < 0:
+    def f(x) -> float:
+        y = m * x + b
+        if y <= 0:
             return 0
-        if m > 1:
+        elif y >= 1:
             return 1
-        return m
+        else:
+            return y
     return f
 
 

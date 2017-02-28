@@ -8,8 +8,12 @@ do: #Set.plot SHOULD always plot the full set range
 ---
 do: MUST fix #Domain._sets (should be either set OR dict)
 until: 2017-3-1
+requires: Set.plot testcase 
 ---
 do: check tests
-every: day
+after: 2017-3-1
+repeat: dayly
+until: end of year
 ---
 do: SHOULD find examples for truth functions
+---
