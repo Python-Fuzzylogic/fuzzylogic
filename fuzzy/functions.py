@@ -300,11 +300,12 @@ def triangular(left, right, p=None, p_m=1, unsupported_m=0):
     p_m
         maximum membership-value, normal 1
     """
-    if left > right:
-        raise ValueError('left must not be greater than right.')
+    assert left < right, 'left must not be greater than right.'
+    
     p = p if p is not None else (left + right) / 2.
-    if not(left <= p <= right):
-        raise ValueError('p must be between left and right.')
+    
+    assert left < p < right, "peak must be between left and right"
+    
     left_slope = bounded_linear(left, p, unsupported_m=0, core_m=p_m)
     right_slope = inv(bounded_linear(p, right, unsupported_m=0, core_m=p_m))
 

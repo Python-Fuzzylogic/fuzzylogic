@@ -91,6 +91,68 @@ class Test_Functions(TestCase):
       st.floats(min_value=0, max_value=1),
       st.floats(min_value=0, max_value=1))
     def test_rectangular(self, x, low_bound, high_bound, core_m, unsupported_m):
-        assume(left < right)
+        assume(low_bound < high_bound)
         f = fun.rectangular(low_bound, high_bound, core_m, unsupported_m)
+        assert (0 <= f(x) <= 1)
+        
+    @given(st.floats(allow_nan=False),
+      st.floats(allow_nan=False, allow_infinity=False),
+      st.floats(allow_nan=False, allow_infinity=False),
+      st.floats(allow_nan=False, allow_infinity=False),
+      st.floats(min_value=0, max_value=1),
+      st.floats(min_value=0, max_value=1))
+    def test_triangular(self, x, left, right, p, p_m, unsupported_m):
+        assume(left < p < right)
+        f = fun.triangular(left, right, p, p_m, unsupported_m)
+        assert (0 <= f(x) <= 1)
+        
+    @given(st.floats(allow_nan=False),
+      st.floats(allow_nan=False, allow_infinity=False),
+      st.floats(allow_nan=False, allow_infinity=False),
+      st.floats(allow_nan=False, allow_infinity=False),
+      st.floats(min_value=0, max_value=1),
+      st.floats(min_value=0, max_value=1))
+    def test_trapezoid(self, x, left, c_left, c_right, right, c_m, unsupported_m):
+        assume(left  < right)
+        f = fun.trapezoid(left, c_left, c_right, right, c_m, unsupported_m)
+        assert (0 <= f(x) <= 1)
+        
+    @given(st.floats(allow_nan=False),
+      st.floats(min_value=0, max_value=1),
+      st.floats(allow_nan=False, allow_infinity=False),
+      st.floats(min_value=0, max_value=1))
+    def test_sigmoid(self, x, L, k, x0):
+        f = sigmoid(L, k, x0)
+        assert (0 <= f(x) <= 1)
+
+    @given(st.floats(allow_nan=False),
+      st.floats(allow_nan=False, allow_infinity=False),
+      st.floats(allow_nan=False, allow_infinity=False))
+    def test_bounded_sigmoid(self, x, low, high):
+        assume(low < high)
+        f = bounded_sigmoid(low, high)
+        assert (0 <= f(x) <= 1)
+    
+    @given(st.floats(allow_nan=False),
+      st.floats(allow_nan=False, allow_infinity=False))
+    def test_simple_sigmoid(self, x, k):
+        f = fun.simple_sigmoid(k)
+        assert (0 <= f(x) <= 1)
+        
+    @given(st.floats(allow_nan=False),
+      st.floats(allow_nan=False, allow_infinity=False),
+      st.floats(allow_nan=False, allow_infinity=False),
+      st.floats(allow_nan=False, allow_infinity=False))
+    def test_triangular_sigmoid(self, x, left, right, p):
+        assume(left < p < right)
+        f = fun.bounded_sigmoid(left, right)
+        assert (0 <= f(x) <= 1)
+    
+    @given(st.floats(allow_nan=False),
+      st.floats(allow_nan=False, allow_infinity=False),
+      st.floats(allow_nan=False, allow_infinity=False),
+      st.floats(allow_nan=False, allow_infinity=False))
+    def test_gauss(self, x, b, p, p_m):
+        assume(left < p < right)
+        f = fun.gauss(left, right)
         assert (0 <= f(x) <= 1)
