@@ -84,3 +84,13 @@ class Test_Functions(TestCase):
         assume(left < right)
         f = fun.S(left, right)
         assert (0 <= f(x) <= 1)
+        
+    @given(st.floats(allow_nan=False),
+      st.floats(allow_nan=False, allow_infinity=False),
+      st.floats(allow_nan=False, allow_infinity=False),
+      st.floats(min_value=0, max_value=1),
+      st.floats(min_value=0, max_value=1))
+    def test_rectangular(self, x, low_bound, high_bound, core_m, unsupported_m):
+        assume(left < right)
+        f = fun.rectangular(low_bound, high_bound, core_m, unsupported_m)
+        assert (0 <= f(x) <= 1)
