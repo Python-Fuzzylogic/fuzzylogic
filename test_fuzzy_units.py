@@ -42,11 +42,10 @@ class Test_Functions(TestCase):
            st.floats(),
            st.floats(min_value=0, max_value=1),
            st.floats(min_value=0, max_value=1))
-    def test_singleton(self, x, p, non_p_m, p_m):
-        assume(0 <= non_p_m <= 1)
-        assume(0 <= p_m <= 1)
-        f = fun.singleton(p, non_p_m, p_m)
-        assert f(x) == (p_m if x == p else non_p_m)
+    def test_singleton(self, x, c, no_m, c_m):
+        assume(0 <= no_m < c_m <= 1)
+        f = fun.singleton(c, no_m=no_m, c_m=c_m)
+        assert f(x) == (c_m if x == c else no_m)
     
     
     @given(st.floats(allow_nan=False, allow_infinity=False),
@@ -61,28 +60,26 @@ class Test_Functions(TestCase):
       st.floats(allow_nan=False, allow_infinity=False),
       st.floats(min_value=0, max_value=1),
       st.floats(min_value=0, max_value=1))
-    def test_bounded_linear(self, x, low_bound, high_bound, core_m, unsupported_m):
-        assume(low_bound < high_bound)
-        assume(core_m > unsupported_m)
-        f = fun.bounded_linear(low_bound, high_bound, core_m, unsupported_m)
+    def test_bounded_linear(self, x, low, high, c_m, no_m):
+        assume(low < high)
+        assume(c_m > no_m)
+        f = fun.bounded_linear(low, high, c_m=c_m, no_m=no_m)
         assert (0 <= f(x) <= 1)
 
     @given(st.floats(allow_nan=False),
             st.floats(allow_nan=False, allow_infinity=False),
-            st.floats(allow_nan=False, allow_infinity=False),
-           )
-    def test_R(self, x, left, right):
-        assume(left < right)
-        f = fun.R(left, right)
+            st.floats(allow_nan=False, allow_infinity=False))
+    def test_R(self, x, low, high):
+        assume(low < high)
+        f = fun.R(low, high)
         assert (0 <= f(x) <= 1)
         
     @given(st.floats(allow_nan=False),
         st.floats(allow_nan=False, allow_infinity=False),
-        st.floats(allow_nan=False, allow_infinity=False),
-       )
-    def test_S(self, x, left, right):
-        assume(left < right)
-        f = fun.S(left, right)
+        st.floats(allow_nan=False, allow_infinity=False))
+    def test_S(self, x, low, high):
+        assume(low < high)
+        f = fun.S(low, high)
         assert (0 <= f(x) <= 1)
         
     @given(st.floats(allow_nan=False),
@@ -90,20 +87,9 @@ class Test_Functions(TestCase):
       st.floats(allow_nan=False, allow_infinity=False),
       st.floats(min_value=0, max_value=1),
       st.floats(min_value=0, max_value=1))
-    def test_rectangular(self, x, low_bound, high_bound, core_m, unsupported_m):
-        assume(low_bound < high_bound)
-        f = fun.rectangular(low_bound, high_bound, core_m, unsupported_m)
-        assert (0 <= f(x) <= 1)
-        
-    @given(st.floats(allow_nan=False),
-      st.floats(allow_nan=False, allow_infinity=False),
-      st.floats(allow_nan=False, allow_infinity=False),
-      st.floats(allow_nan=False, allow_infinity=False),
-      st.floats(min_value=0, max_value=1),
-      st.floats(min_value=0, max_value=1))
-    def test_triangular(self, x, left, right, p, p_m, unsupported_m):
-        assume(left < p < right)
-        f = fun.triangular(left, right, p, p_m, unsupported_m)
+    def test_rectangular(self, x, low, high, c_m, no_m):
+        assume(low < high)
+        f = fun.rectangular(low, high, c_m=c_m, no_m=no_m)
         assert (0 <= f(x) <= 1)
         
     @given(st.floats(allow_nan=False),
@@ -112,9 +98,23 @@ class Test_Functions(TestCase):
       st.floats(allow_nan=False, allow_infinity=False),
       st.floats(min_value=0, max_value=1),
       st.floats(min_value=0, max_value=1))
-    def test_trapezoid(self, x, left, c_left, c_right, right, c_m, unsupported_m):
-        assume(left  < right)
-        f = fun.trapezoid(left, c_left, c_right, right, c_m, unsupported_m)
+    def test_triangular(self, x, low, high, c, c_m, no_m):
+        assume(low < c < high)
+        assume(no_m < c_m)
+        f = fun.triangular(low, high, c=c, c_m=c_m, no_m=no_m)
+        assert (0 <= f(x) <= 1)
+        
+    @given(st.floats(allow_nan=False),
+      st.floats(allow_nan=False, allow_infinity=False),
+      st.floats(allow_nan=False, allow_infinity=False),
+      st.floats(allow_nan=False, allow_infinity=False),
+      st.floats(min_value=0, max_value=1),
+      st.floats(min_value=0, max_value=1),
+      st.floats(min_value=0, max_value=1))
+    def test_trapezoid(self, x, low, c_low, c_high, high, c_m, no_m):
+        assume(low < c_low <= c_high < high)
+        assume(no_m < c_m)
+        f = fun.trapezoid(low, c_low, c_high, high, c_m=c_m, no_m=no_m)
         assert (0 <= f(x) <= 1)
         
     @given(st.floats(allow_nan=False),
@@ -122,7 +122,8 @@ class Test_Functions(TestCase):
       st.floats(allow_nan=False, allow_infinity=False),
       st.floats(min_value=0, max_value=1))
     def test_sigmoid(self, x, L, k, x0):
-        f = sigmoid(L, k, x0)
+        assume(0 < L <= 1)
+        f = fun.sigmoid(L, k, x0)
         assert (0 <= f(x) <= 1)
 
     @given(st.floats(allow_nan=False),
@@ -130,7 +131,7 @@ class Test_Functions(TestCase):
       st.floats(allow_nan=False, allow_infinity=False))
     def test_bounded_sigmoid(self, x, low, high):
         assume(low < high)
-        f = bounded_sigmoid(low, high)
+        f = fun.bounded_sigmoid(low, high)
         assert (0 <= f(x) <= 1)
     
     @given(st.floats(allow_nan=False),
@@ -143,16 +144,17 @@ class Test_Functions(TestCase):
       st.floats(allow_nan=False, allow_infinity=False),
       st.floats(allow_nan=False, allow_infinity=False),
       st.floats(allow_nan=False, allow_infinity=False))
-    def test_triangular_sigmoid(self, x, left, right, p):
-        assume(left < p < right)
-        f = fun.bounded_sigmoid(left, right)
+    def test_triangular_sigmoid(self, x, low, high, c):
+        assume(low < c < high)
+        f = fun.triangular(low, high, c=c)
         assert (0 <= f(x) <= 1)
     
     @given(st.floats(allow_nan=False),
       st.floats(allow_nan=False, allow_infinity=False),
       st.floats(allow_nan=False, allow_infinity=False),
       st.floats(allow_nan=False, allow_infinity=False))
-    def test_gauss(self, x, b, p, p_m):
-        assume(left < p < right)
-        f = fun.gauss(left, right)
+    def test_gauss(self, x, b, c, c_m):
+        assume(0 < c_m < 1)
+        assume(0 < b)
+        f = fun.gauss(c, b, c_m=c_m)
         assert (0 <= f(x) <= 1)

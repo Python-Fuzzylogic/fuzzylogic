@@ -20,16 +20,16 @@ In a normal set there is at least one m with m == 1. This is the default.
 In a non-normal set, the global maximum and minimum is skewed.
 The following definitions are for normal sets.
 
-The intervals with non-zero m are called 'support'.
-The intervals with m == 1 are called 'core'.
+The intervals with non-zero m are called 'support', short s_m
+The intervals with m == 1 are called 'core', short c_m
 The intervals  m != 1 and m != 0 are called 'boundary'.
-The intervals with m == 0 are called 'unsupported'.
+The intervals with m == 0 are called 'unsupported', short no_m
 
 In a fuzzy set with one and only one m == 1, this element is called 'prototype'.
 """
 
 
-from math import exp, log, sqrt, isinf
+from math import exp, log, sqrt, isinf, isnan
 
 #####################
 # SPECIAL FUNCTIONS #
@@ -87,12 +87,8 @@ def alpha(floor, ceiling, func):
 # MEMBERSHIP FUNCTIONS #
 ########################
 
-def singleton(p, *, non_p_m=0, p_m=1):
+def singleton(p, *, no_m=0, c_m=1):
     """A single spike.
-    vars:
-        p (prototype) - single value with
-        p_m (prototype membership value)
-        non_p_m - value of all values but p
     >>> f = singleton(2)
     >>> f(1)
     0
@@ -100,11 +96,10 @@ def singleton(p, *, non_p_m=0, p_m=1):
     1
     """
 
-    assert 0 <= non_p_m < p_m <= 1
+    assert 0 <= no_m < c_m <= 1
 
     def f(x):
-        return p_m if x == p else non_p_m
-
+        return c_m if x == p else no_m
     return f
 
 
@@ -138,7 +133,7 @@ def linear(m:float=0, b:float=0) -> callable:
     return f
 
 
-def bounded_linear(low, high, *, core_m=1, unsupported_m=0):
+def bounded_linear(low, high, *, c_m=1, no_m=0):
     """Variant of the linear function with gradient being determined by bounds.
 
     THIS FUNCTION ONLY CAN HAVE A POSITIVE SLOPE -
@@ -152,18 +147,7 @@ def bounded_linear(low, high, *, core_m=1, unsupported_m=0):
 
     (right_y - left_y) / ((right - left) * (x - self.left) + left_y)
     works.
-
-    vars
-    ----
-    high: float
-        the x-value, where f(x) = core_m
-    low: float
-        the x-value, where f(x) = unsupported_m
-    core_m: float
-        membership-value of the maximum
-    unsupported_m: float
-        membership-value of the minimum
-
+    
     >>> f = bounded_linear(2, 3)
     >>> f(1)
     0.0
@@ -177,14 +161,14 @@ def bounded_linear(low, high, *, core_m=1, unsupported_m=0):
     1.0
     """
     assert low < high, "low must be less than high"
-    assert core_m > unsupported_m, "core_m must be greater than unsupported_m"
+    assert c_m > no_m, "core_m must be greater than unsupported_m"
 
-    gradient = (core_m - unsupported_m) / (high - low)
+    gradient = (c_m - no_m) / (high - low)
     
     # special cases found by hypothesis
     
     def g_0(x):
-        return (core_m + unsupported_m) / 2
+        return (c_m + no_m) / 2
     
     if gradient == 0:
         return g_0
@@ -192,17 +176,17 @@ def bounded_linear(low, high, *, core_m=1, unsupported_m=0):
     def g_inf(x):
         asymptode = (high + low) / 2
         if x < asymptode:
-            return unsupported_m
+            return no_m
         elif x > asymptode:
-            return core_m
+            return c_m
         else:
-            return (core_m + unsupported_m) / 2
+            return (c_m + no_m) / 2
     
     if isinf(gradient):
         return g_inf
     
     def f(x):
-        y = gradient * (x - low) + unsupported_m
+        y = gradient * (x - low) + no_m
         if y < 0:
             return 0.
         if y > 1:
@@ -217,14 +201,14 @@ def R(low, high):
     USE THE S() FUNCTION FOR NEGATIVE SLOPE.
     """
 
-    assert low < right, "low must be less than high."
+    assert low < high, "low must be less than high."
 
     def f(x):
         if x < low:
             return 0
         if low <= x <= high:
             return (x - low) / (high - low)
-        if x > right:
+        if x > high:
             return 1
     return f
 
@@ -246,7 +230,7 @@ def S(low, high):
     return f
 
 
-def rectangular(low:float, high:float, *, core_m:float=1, unsupported_m:float=0) -> callable:
+def rectangular(low:float, high:float, *, c_m:float=1, no_m:float=0) -> callable:
     """Basic rectangular function that returns the core_y for the core else 0.
     -----
         ______
@@ -258,16 +242,16 @@ def rectangular(low:float, high:float, *, core_m:float=1, unsupported_m:float=0)
 
     def f(x:float) -> float:
         if x < low:
-            return unsupported_m
+            return no_m
         if low <= x <= high:
-            return core_m
+            return c_m
         if high < x:
-            return unsupported_m
+            return no_m
 
     return f
 
 
-def triangular(low, high, *, p=None, peak_m=1, unsupported_m=0):
+def triangular(low, high, *, c=None, c_m=1, no_m=0):
     """Basic triangular norm as combination of two linear functions.
 
          /\
@@ -275,20 +259,20 @@ def triangular(low, high, *, p=None, peak_m=1, unsupported_m=0):
 
     """
     assert low < high, 'low must be less than high.'
+    assert no_m < c_m
     
-    p = p if p is not None else (low + high) / 2.
+    c = c if c is not None else (low + high) / 2.
+    assert low < c < high, "peak must be inbetween"
     
-    assert low < p < high, "peak must be inbetween"
-    
-    left_slope = bounded_linear(low, p, unsupported_m=0, core_m=peak_m)
-    right_slope = inv(bounded_linear(p, high, unsupported_m=0, core_m=peak_m))
+    left_slope = bounded_linear(low, c, no_m=0, c_m=c_m)
+    right_slope = inv(bounded_linear(c, high, no_m=0, c_m=c_m))
 
     def f(x):
-        return left_slope(x) if x <= p else right_slope(x)
+        return left_slope(x) if x <= c else right_slope(x)
     return f
 
 
-def trapezoid(low, c_low, c_high, high, core_m=1, unsupported_m=0):
+def trapezoid(low, c_low, c_high, high, *, c_m=1, no_m=0):
     """Combination of rectangular and triangular, for convenience.
           ____
          /    \
@@ -297,21 +281,18 @@ def trapezoid(low, c_low, c_high, high, core_m=1, unsupported_m=0):
     """
 
     assert low < c_low <= c_high < high
-    assert 0 <= c_m <= 1 
-    assert 0 <= unsupported_m <= 1
-    
-    left_slope = bounded_linear(left, c_left, c_m, unsupported_m)
-    right_slope = inv(bounded_linear(c_right, right, c_m, unsupported_m))
+    assert 0 <= no_m < c_m <= 1 
+
+    left_slope = bounded_linear(low, c_low, c_m=c_m, no_m=no_m)
+    right_slope = inv(bounded_linear(c_high, high, c_m=c_m, no_m=no_m))
 
     def f(x):
-        # not touching the base
         if x < low or high < x:
-            return unsupported_m
+            return no_m
         elif x < c_low:
             return left_slope(x)
         elif x > c_high:
             return right_slope(x)
-        # we're on the top
         else:
             return c_m
 
@@ -329,10 +310,19 @@ def sigmoid(L, k, x0):
     L = the curve's maximum value
     k = steepness
     """
-    assert 0 <= L <= 1, 'L invalid.'
+    # need to be really careful here, otherwise we end up in nanland
+    assert 0 < L <= 1, 'L invalid.'
 
     def f(x):
-        return L / (1 + exp(-k*(x - x0)))
+        if isnan(k*x):
+            # e^(0*inf) = 1
+            o = 1
+        else:
+            try:
+                o = exp(-k*(x - x0))
+            except OverflowError:
+                o = float("inf")
+        return L / (1 + o)
 
     return f
 
@@ -368,11 +358,15 @@ def bounded_sigmoid(low, high):
     assert low < high, 'low must be less than high'
     
     k = -(4. * log(3)) / (low - high)
-    o = 9 * exp(low * k)
-
+    # yay for limits! .. and for goddamn hidden divisions by zero thanks to floats >:/
+    try:
+        o = 9 if isinf(k) else 9 * exp(low * k)
+    except OverflowError:
+        o = float("inf")
+        
     def f(x):
         try:
-            return 1. / (1. + exp(x * -k) * o)
+            return 0.1 if isinf(k) else 1. / (1. + exp(x * -k) * o)
         except OverflowError:
             return 0.0
     return f
@@ -382,14 +376,9 @@ def simple_sigmoid(k=0.229756):
     """Sigmoid variant with only one parameter (steepness).
 
     The midpoint is 0.
-
     The slope is positive for positive k and negative k.
-
     f(x) is within [0,1] for any real k and x.
-
-
     >>> f = simple_sigmoid()
-
     >>> round(f(-1000), 2)
     0.0
     >>> f(0)
@@ -402,11 +391,18 @@ def simple_sigmoid(k=0.229756):
     0.99
     """
     def f(x):
-        return 1 / (1 + exp(x * -k))
+        # yay for limits..
+        if (isinf(x) and k == 0):
+            return 1/2
+        else:
+            try:
+                return 1 / (1 + exp(x * -k))
+            except OverflowError:
+                return 0.
     return f
 
 
-def triangular_sigmoid(low, high, p=None):
+def triangular_sigmoid(low, high, c=None):
     """Version of triangular using sigmoids instead of linear.
     THIS FUNCTION PEAKS AT 0.9
 
@@ -418,14 +414,14 @@ def triangular_sigmoid(low, high, p=None):
     """
 
     assert low < high, "low must be less than high"
-    p = p if p is not None else (low + high) / 2.
-    assert low < p < high, "p must be inbetween"
+    c = c if c is not None else (low + high) / 2.
+    assert low < c < high, "c must be inbetween"
 
-    left_slope = bounded_sigmoid(low, p)
-    right_slope = inv(bounded_sigmoid(p, high))
+    left_slope = bounded_sigmoid(low, c)
+    right_slope = inv(bounded_sigmoid(c, high))
 
     def f(x):
-        if x <= p:
+        if x <= c:
             return left_slope(x)
         else:
             return right_slope(x)
@@ -433,22 +429,28 @@ def triangular_sigmoid(low, high, p=None):
     return f
 
 
-def gauss(b, p, p_m=1):
+def gauss(c, b, *, c_m=1):
     """Defined by ae^(-b(x-x0)^2), a gaussian distribution.
     Basically a triangular sigmoid function, it comes close to human perception.
 
     vars
     ----
-    p_m (a)
+    c_m (a)
         defines the maximum y-value of the graph
     b
         defines the steepness
-    p (x0)
-        defines the symmetry center of the graph
+    c (x0)
+        defines the symmetry center/peak of the graph
     """
+    assert 0 < c_m <= 1
+    assert 0 < b
 
     def f(x):
-        return p_m * exp(-b * (x - p)**2)
+        try:
+            o = (x - c)**2
+        except OverflowError:
+            return 0
+        return c_m * exp(-b * o)
     return f
 
 
