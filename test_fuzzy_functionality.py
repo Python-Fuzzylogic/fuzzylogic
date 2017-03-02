@@ -15,12 +15,10 @@ class TestSet(unittest.TestCase):
         self.temp = Domain('temperature', -100, 100, 1)  # in Celsius
         self.temp.cold = Set(S(0, 15))
         self.temp.hot = Set(R(10, 30))
-        self.temp.warm = ~self.cold & ~self.hot
-        assert(temp(6) == {'cold': 0.6, 'hot': 0, 'warm': 0.4})
+        self.temp.warm = ~self.temp.cold & ~self.temp.hot
 
     def test_temp(self):
-        # we need to define a dictionary-aggregation func here
-        pass
+        assert(self.temp(6) == {'cold': 0.6, 'hot': 0, 'warm': 0.4})
 
 
 if __name__ == '__main__':
