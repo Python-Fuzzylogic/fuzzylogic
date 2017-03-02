@@ -3,22 +3,26 @@
 -----------
 COMBINATORS
 -----------
-Linguistic terms (membership functions of two different FuzzySets) 
-are combined with these functions to implement rules.
+Linguistic terms (membership functions of two different FuzzySets of the same domain) 
+are combined.
 
 a and b are functions.
+
+Since these combinators are used directly in the Set class to implement logic operations, 
+the most obvious use of this module is when subclassing Set to make use of specific combinators
+for special circumstances.
 """
 
 
 def MIN(a, b):
-    """Simple AND of two functions a and b."""
+    """Classic AND variant."""
     def f(x):
         return min(a(x), b(x))
     return f
 
 
 def MAX(a, b):
-    """Simple OR of two functions a and x."""
+    """Classic OR variant."""
     def f(x):
         return max(a(x), b(x))
     return f
@@ -38,28 +42,17 @@ def bounded_sum(a, b):
         return a_x + b_x - a_x * b_x
     return f
 
-
-def lukasiewicz_OR(a, b):
-    """OR variant."""
-    def f(x):
-        return max(0, a(x) + b(x) - 1)
-    return f
-
-
 def lukasiewicz_AND(a, b):
     """AND variant."""
     def f(x):
         return min(1, a(x) + b(x))
     return f
 
-
-def einstein_sum(a, b):
+def lukasiewicz_OR(a, b):
     """OR variant."""
     def f(x):
-        a_x, b_x = a(x), b(x)
-        return (a_x + b_x) / (1 + a_x * b_x)
+        return max(0, a(x) + b(x) - 1)
     return f
-
 
 def einstein_product(a, b):
     """AND variant."""
@@ -68,14 +61,12 @@ def einstein_product(a, b):
         return (a_x * b_x) / (2 - (a_x + b_x - a_x * b_x))
     return f
 
-
-def hamacher_sum(a, b):
+def einstein_sum(a, b):
     """OR variant."""
     def f(x):
         a_x, b_x = a(x), b(x)
-        return (a_x + b_x - 2 * a_x * b_x) / (1 - a_x * b_x)
+        return (a_x + b_x) / (1 + a_x * b_x)
     return f
-
 
 def hamacher_product(a, b):
     """AND variant."""
@@ -83,6 +74,12 @@ def hamacher_product(a, b):
         a_x, b_x = a(x), b(x)
         return (a_x * b_x) / (a_x + b_x - a_x * b_x)
 
+def hamacher_sum(a, b):
+    """OR variant."""
+    def f(x):
+        a_x, b_x = a(x), b(x)
+        return (a_x + b_x - 2 * a_x * b_x) / (1 - a_x * b_x)
+    return f
 
 def lambda_op(a, b, l):
     """A 'compensatoric' operator, combining AND with OR by a weighing factor l.

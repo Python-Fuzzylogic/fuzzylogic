@@ -61,10 +61,9 @@ class Domain:
     def __call__(self, x):
         if not(self.low <= x <= self.high):
             warn(f"{x} is outside of domain!")
-        set_memberships = {}
-        for setname, s in self._sets.items():
-            set_memberships["{0}.{1}".format(self.name, setname)] = s(x)
-        return set_memberships
+        memberships = {name: s.func(x) for 
+                        name, s, in self._sets.items()}
+        return memberships
 
     def __str__(self):
         return self.name

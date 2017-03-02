@@ -5,7 +5,7 @@ TRUTH QUALIFICATION
 -------------------
 Functions that transform a given membership value to a truth value.
 
-How this can be useful? Well.. 
+How this can be useful? Beats me. Found it somewhere on the internet, never needed it.
 """
 
 
