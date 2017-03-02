@@ -360,15 +360,23 @@ def bounded_sigmoid(low, high):
     k = -(4. * log(3)) / (low - high)
     # yay for limits! .. and for goddamn hidden divisions by zero thanks to floats >:/
     try:
-        o = 9 if isinf(k) else 9 * exp(low * k)
+        m = exp(low * k)
+        # possibility of an underflow! m -> 0
+        o = 9 if isinf(k) else 9 * m
+        # o can be 0!
     except OverflowError:
         o = float("inf")
         
     def f(x):
+        if o == 0 and x == float("-inf"):
+            return 1/2
         try:
+            # if o == 0 we get nan if x is -inf and k is positive
+            # then e^(inf*0) = 1
             return 0.1 if isinf(k) else 1. / (1. + exp(x * -k) * o)
         except OverflowError:
             return 0.0
+        
     return f
 
 

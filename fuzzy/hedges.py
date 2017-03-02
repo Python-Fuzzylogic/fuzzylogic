@@ -4,52 +4,31 @@
 HEDGES
 ------
 Lingual hedges modify curves describing truthvalues.
-These work with sets only. Meta-functionality is deprecated.
+These work with sets only. It's more trouble than it is worth making
+these work with pure functions, so meta-functionality was removed.
 """
 
 from fuzzy.classes import Set
-from warnings import warn
 
 def very(g):
-    def f(x):
-        return g(x) ** 2
-
     def s_f(g):
         def f(x):
             return g(x) ** 2
         return f
-
-    if isinstance(g, Set):
-        return Set(g.domain, s_f(g.func))
-    warn("deprecated", DeprecationWarning)
-    return f
+    return Set(s_f(g.func))
 
 
 def plus(g):
-    def f(x):
-        return g(x) ** 1.25
-    
     def s_f(g):
         def f(x):
             return g(x) ** 1.25
         return f
-    
-    if isinstance(g, Set):
-        return Set(g.domain, s_f(g.func))
-    warn("deprecated", DeprecationWarning)
-    return f
+    return Set(s_f(g.func))
     
 
 def minus(g):
-    def f(x):
-        return g(x) ** 0.75
-    
     def s_f(g):
         def f(x):
             return g(x) ** 0.75
-        return f
-    
-    if isinstance(g, Set):
-        return Set(g.domain, s_f(g.func))
-    warn("deprecated", DeprecationWarning)
-    return f
+        return f 
+    return Set(s_f(g.func))
