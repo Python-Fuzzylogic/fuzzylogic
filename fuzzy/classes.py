@@ -6,7 +6,7 @@ from logging import warn
 import pickle
 
 from fuzzy.functions import inv, normalize
-from fuzzy.combinators import MAX, MIN, product, bounded_sum
+from fuzzy.combinators import MAX, MIN, product, bounded_sum, simple_disjoint_sum
 
 class FuzzyWarning(UserWarning):
     pass
@@ -174,6 +174,9 @@ class Set:
 
     def __add__(self, other):
         return Set(bounded_sum(self.func, other.func))
+    
+    def __xor__(self, other):
+        return Set(simple_disjoint_sum(self.func, other.func))
 
     def __pow__(self, power):
         """pow is used with hedges"""
@@ -218,9 +221,18 @@ class Set:
     
     def __len__(self):
         if self.domain is None:
-            raise FuzzyWarning("No domain, can't determine length.")
+            raise FuzzyWarning("No domain.")
         return len(self.array())
-        
+    
+    def cardinality(self):
+        if self.domain is None:
+            raise FuzzyWarning("No domain.")
+        return sum(self.array())
+
+    def relative_cardinality(self):
+        if self.domain is None:
+            raise FuzzyWarning("No domain.")
+        return self.cardinality() / len(self)
         
     def plot(self, low=None, high=None, res=None):
         """Graph the set.

@@ -278,6 +278,12 @@ class Test_Combinators(TestCase):
         f = g(a, b)
         assert (0 <= f(x) <= 1)
         
+    @given(st.floats(min_value=0, max_value=1))
+    def test_hamacher_sum(self, x):
+        a = fun.noop()
+        b = fun.noop()
+        f = combi.simple_disjoint_sum(a, b)
+        assert (0 <= f(x) <= 1)
 
 class Test_Set(TestCase):
     @skip("repr is complicated")

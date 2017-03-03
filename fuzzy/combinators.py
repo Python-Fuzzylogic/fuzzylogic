@@ -121,3 +121,12 @@ def gamma_op(g):
             return (x * y) ** (1 - g) * ((1 - x) * (1 - y)) ** g
         return f
     return e
+
+def simple_disjoint_sum(a, b):
+    """Implements a simple fuzzy XOR operation.
+    (A AND ~B) OR (~A AND B)
+    """
+    def f(z):
+        x, y = a(z), b(z)
+        return max(min(x, 1-y), min(1-x, y))
+    return f
