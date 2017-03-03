@@ -296,6 +296,7 @@ class Set:
             return f"{self.domain}.{self.name}"
         
     def normalized(self):
+        """Returns a set *in this domain* whose max value is 1."""
         if self.domain is None:
             raise FuzzyWarning("Can't normalize without domain.")
         else:
