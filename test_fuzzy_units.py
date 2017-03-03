@@ -2,6 +2,7 @@
 from hypothesis import given, strategies as st, assume
 from math import isclose
 from unittest import TestCase, skip
+import numpy as np
 
 from fuzzy.classes import Domain, Set, Rule
 from fuzzy import functions as fun
@@ -314,3 +315,9 @@ class Test_Set(TestCase):
         x = D.s.normalized()
         assert (x >= D.s)
         assert (D.s <= x)
+        
+    def test_complement(self):
+        D = Domain("d", 0, 10, res=0.1)
+        D.s1 = Set(fun.bounded_linear(3, 12))
+        D.s2 = ~~D.s1
+        assert all(np.isclose(D.s1.array(), D.s2.array()))
