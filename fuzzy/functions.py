@@ -22,6 +22,7 @@ The following definitions are for normal sets.
 
 The intervals with non-zero m are called 'support', short s_m
 The intervals with m == 1 are called 'core', short c_m
+The intervals with max(m) are called "height"
 The intervals  m != 1 and m != 0 are called 'boundary'.
 The intervals with m == 0 are called 'unsupported', short no_m
 
@@ -83,6 +84,13 @@ def alpha(floor, ceiling, func):
             return func(x)
     return f
 
+def normalize(height, func):
+    assert 0 < height <= 1
+    
+    def f(x):
+        return func(x) / height
+    return f
+    
 ########################
 # MEMBERSHIP FUNCTIONS #
 ########################

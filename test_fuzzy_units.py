@@ -29,8 +29,7 @@ class Test_Functions(TestCase):
 
     @given(st.floats(allow_nan=False),
             st.floats(min_value=0, max_value=1),
-            st.floats(min_value=0, max_value=1),
-           )
+            st.floats(min_value=0, max_value=1))
     def test_alpha(self, x, lower, upper):
         assume(lower < upper)
         f = fun.alpha(lower, upper, fun.noop())
@@ -40,6 +39,13 @@ class Test_Functions(TestCase):
             assert f(x) == upper
         else:
             assert f(x) == x
+            
+    @given(st.floats(allow_nan=False),
+            st.floats(min_value=0, max_value=1))
+    def test_normalize(self, x, height):
+        assume(0 < height)
+        f = fun.normalize(height, fun.alpha(0, height, fun.R(0,100)))
+        assert (0 <= f(x) <= 1)       
 
     @given(st.floats(),
            st.floats(),
@@ -292,3 +298,19 @@ class Test_Set(TestCase):
         D2 = Domain("2", low, high, res=res)
         D2.s2 = Set(fun.bounded_linear(low, high))
         assert(D1.s1 == D2.s2)
+    
+    def test_normalized(self):
+        D = Domain("d", 0, 10, res=0.1)
+        D.s = Set(fun.bounded_linear(3, 12))
+        x = D.s.normalized()
+        y = x.normalized()
+        
+        assert (set(D._sets.keys()) == set(["s", "normalized_s", "normalized_normalized_s"]))
+        assert x == y
+        
+    def test_sub_super_set(self):
+        D = Domain("d", 0, 10, res=0.1)
+        D.s = Set(fun.bounded_linear(3, 12))
+        x = D.s.normalized()
+        assert (x >= D.s)
+        assert (D.s <= x)

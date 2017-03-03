@@ -1,10 +1,11 @@
 
 import matplotlib.pyplot as plt
-from numpy import arange, fromiter, array_equal
+from numpy import arange, fromiter, array_equal, less_equal, greater_equal, less, greater
+import numpy as np
 from logging import warn
 import pickle
 
-from fuzzy.functions import inv
+from fuzzy.functions import inv, normalize
 from fuzzy.combinators import MAX, MIN, product, bounded_sum
 
 class FuzzyWarning(UserWarning):
@@ -179,7 +180,7 @@ class Set:
         return Set(lambda x: pow(self.func(x), power))
     
     def __eq__(self, other):
-        """A set is equal with another if it returns exactly the same values."""
+        """A set is equal with another if both return the same values over the same range."""
         if self.domain is None or other.domain is None:
             # It would require complete AST analysis to check whether both Sets
             # represent the same recursive functions - 
@@ -190,7 +191,37 @@ class Set:
             # however, if domains ARE assigned (whether or not it's the same domain), 
             # we simply can check if they map to the same values 
             return array_equal(self.array(), other.array())
+        
+    def __le__(self, other):
+        """If this is less than other, it means this is a subset of the other."""
+        if self.domain is None or other.domain is None:
+            raise FuzzyWarning("Can't compare without Domains.")
+        return all(less_equal(self.array(), other.array()))
+    
+    def __lt__(self, other):
+        """If this is less than other, it means this is a subset of the other."""
+        if self.domain is None or other.domain is None:
+            raise FuzzyWarning("Can't compare without Domains.")
+        return all(less(self.array(), other.array()))
+    
+    def __ge__(self, other):
+        """If this is greater than other, it means this is a superset of the other."""
+        if self.domain is None or other.domain is None:
+            raise FuzzyWarning("Can't compare without Domains.")
+        return all(greater_equal(self.array(), other.array()))
 
+    def __gt__(self, other):
+        """If this is less than other, it means this is a subset of the other."""
+        if self.domain is None or other.domain is None:
+            raise FuzzyWarning("Can't compare without Domains.")
+        return all(greater(self.array(), other.array()))
+    
+    def __len__(self):
+        if self.domain is None:
+            raise FuzzyWarning("No domain, can't determine length.")
+        return len(self.array())
+        
+        
     def plot(self, low=None, high=None, res=None):
         """Graph the set.
         Use the bounds and resolution of the domain to display the set
@@ -219,7 +250,9 @@ class Set:
         Return a string representation of the Set that reconstructs the set with eval().
         
         *******
-        this is harder than expected since all functions are (recursive!) closures which
+        Current implementation does NOT work correctly.
+        
+        This is harder than expected since all functions are (recursive!) closures which
         can't simply be pickled. If this functionality really is needed, all functions 
         would have to be peppered with closure-returning overhead such as
         
@@ -232,15 +265,21 @@ class Set:
             func = types.FunctionType(*args[:-1] + [closure])
             return func
         """
-        return NotImplemented
-        #return f"Set({}, domain={self.domain}, name={self.name})"
+        return f"Set({self.func}, domain={self.domain}, name={self.name})"
     
     def __str__(self):
         if self.name is None and self.domain is None:
             return f"dangling Set({self.func})"
         else:
             return f"{self.domain}.{self.name}"
-
+        
+    def normalized(self):
+        if self.domain is None:
+            raise FuzzyWarning("Can't normalize without domain.")
+        else:
+            return Set(normalize(max(self.array()), self.func), 
+                            domain=self.domain,
+                            name=f"normalized_{self.name}")
 
 class Rule:
     """
