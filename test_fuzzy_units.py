@@ -1,7 +1,7 @@
 
 from hypothesis import given, strategies as st, assume
 from math import isclose
-from unittest import TestCase
+from unittest import TestCase, skip
 
 from fuzzy.classes import Domain, Set, Rule
 from fuzzy import functions as fun
@@ -270,3 +270,25 @@ class Test_Combinators(TestCase):
         g = combi.gamma_op(g)
         f = g(a, b)
         assert (0 <= f(x) <= 1)
+        
+
+class Test_Set(TestCase):
+    @skip("repr is complicated")
+    def test_repr_unassigned(self):
+        s1 = Set(fun.noop())
+        s2 = eval(repr(s1))
+        assert s1 == s2
+    
+    @given(st.floats(allow_nan=False, allow_infinity=False),
+           st.floats(allow_nan=False, allow_infinity=False),
+          st.floats(min_value=0.000001, max_value=1))
+    def test_eq(self, low, high, res):
+        """This also tests Set.array()."""
+        assume(low < high)
+        # to avoid MemoryError and runs that take forever..
+        assume(high - low <= 10000)
+        D1 = Domain("1", low, high, res=res)
+        D1.s1 = Set(fun.bounded_linear(low, high))
+        D2 = Domain("2", low, high, res=res)
+        D2.s2 = Set(fun.bounded_linear(low, high))
+        assert(D1.s1 == D2.s2)

@@ -1,7 +1,8 @@
 
 import matplotlib.pyplot as plt
-from numpy import arange, fromiter
+from numpy import arange, fromiter, array_equal
 from logging import warn
+import pickle
 
 from fuzzy.functions import inv
 from fuzzy.combinators import MAX, MIN, product, bounded_sum
@@ -111,11 +112,20 @@ class Set:
     _name = None
     
     def __init__(self, func:callable, *, domain=None, name=None):
-        assert callable(func)
+        assert callable(func) or isinstance(func, str)
+        # if func is a str, we've got a pickled function via repr
+        
+        if isinstance(func, str):
+            try: 
+                func = pickle.loads(func)
+            except:
+                FuzzyWarning("Can't load pickled function %s" % func)
         self.func = func
         # either both must be given or none
         assert (domain is None) == (name is None)
         self.domain = domain
+        if domain is not None:
+            self.domain._sets[name] = self
         self.name = name
         
     def name_():
@@ -139,7 +149,8 @@ class Set:
             if self._domain is None:
                 self._domain = value 
             else:
-                # maybe could be solved by copy()?
+                # maybe could be solved by copy()
+                # but it's probably easier to just delete and make new
                 raise FuzzyWarning("Can't change domain once assigned.")
         return locals()
     domain = property(**domain_())
@@ -166,6 +177,19 @@ class Set:
     def __pow__(self, power):
         """pow is used with hedges"""
         return Set(lambda x: pow(self.func(x), power))
+    
+    def __eq__(self, other):
+        """A set is equal with another if it returns exactly the same values."""
+        if self.domain is None or other.domain is None:
+            # It would require complete AST analysis to check whether both Sets
+            # represent the same recursive functions - 
+            # additionally, there are infinitely many mathematically equivalent 
+            # functions that don't have the same bytecode...
+            raise FuzzyWarning(f"Impossible to determine.")
+        else:
+            # however, if domains ARE assigned (whether or not it's the same domain), 
+            # we simply can check if they map to the same values 
+            return array_equal(self.array(), other.array())
 
     def plot(self, low=None, high=None, res=None):
         """Graph the set.
@@ -191,7 +215,25 @@ class Set:
                                                      self.domain.res)), float)
 
     def __repr__(self):
-        return f"Set({self.func}, domain={self.domain}, name={self.name})"
+        """
+        Return a string representation of the Set that reconstructs the set with eval().
+        
+        *******
+        this is harder than expected since all functions are (recursive!) closures which
+        can't simply be pickled. If this functionality really is needed, all functions 
+        would have to be peppered with closure-returning overhead such as
+        
+        def create_closure_and_function(*args):
+            func = None
+            def create_function_closure():
+                return func
+
+            closure = create_function_closure.__closure__
+            func = types.FunctionType(*args[:-1] + [closure])
+            return func
+        """
+        return NotImplemented
+        #return f"Set({}, domain={self.domain}, name={self.name})"
     
     def __str__(self):
         if self.name is None and self.domain is None:
@@ -221,26 +263,15 @@ class Rule:
 
     Calling the domains MAY be done async for better performance, a rule only
     needs the dict with the qualified fuzzysets.
-    Two or more rules usually are combined using the max() operation.
-    As func anything is valid that maps a list of ( [0,1] ) -> [0,1]
-
-    Rules are often used to control the behaviour of complex systems.
-    To do this, the output of a rule MAY be associated with a fuzzyset
-    of the domain that is to be controlled.
-    For simple applications, the return values are sufficient, so we stick
-    with that for now.
     """
-    def __init__(self, func, fuzzysets, control=None):
-        self.func = func
-        self.fuzzysets = set(fuzzysets)  # qualified set names with 'domain.set'
-        self.control = control
+    def __init__(self, *, OR:callable, AND:callable, IN:list, OUT:list):
+        self.OR = OR
+        self.AND = AND
+        self.IN = IN
+        self.OUT = OUT
 
-    def __call__(self, d):
-        try:
-            return self.func(d[name] for name, value in d.items()
-                             if name in self.fuzzysets)
-        except TypeError:   # none of the fuzzysets in question returned
-            return 0
+    def evaluate(self):
+        pass
 
     def plot(self):
         pass
