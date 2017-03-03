@@ -1,8 +1,8 @@
 do: build a #testcase suite
 ---
-do: #Set.plot SHOULD always plot between 0 and 1
+do: add switch to #Set.plot SHOULD plot between 0 and 1
 ---
-do: #Set.plot SHOULD always plot the full set range
+do: add switch to #Set.plot SHOULD plot the full set range
 ---
 do: check tests
 after: 2017-3-1
