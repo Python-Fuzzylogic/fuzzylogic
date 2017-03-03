@@ -31,7 +31,8 @@ class Domain:
 
     DO NOT call a derived set without assignment first as it WILL
     confuse the recursion and seriously mess up.
-    NOT: ~temp.hot(2) or ~(temp.hot.)(2) but:
+    NOT: ~temp.hot(2) or ~(temp.hot.)(2) 
+    BUT:
     >>> not_hot = ~temp.hot
     >>> not_hot(2)
     1
@@ -44,14 +45,14 @@ class Domain:
     dictionary with the degrees of membership per set. You MAY override __call__
     in a subclass to enable concurrent evaluation for performance improvement.
     >>> temp.cold = not_hot
-    
-    # >>> temp(3) == {'temperature.hot': 0, 'temperature.cold': 1}
-    # True
+    >>> temp(3) == {"hot": 0, "cold": 1}
+    True
     """
     _allowed_attrs = ['name', 'low', 'high', 'res', '_sets']
 
     def __init__(self, name, low, high, res=1):
         assert low < high, "higher bound must be greater than lower."
+        assert res > 0, "resolution can't be negative or zero"
         self.name = name
         self.high = high
         self.low = low
@@ -130,7 +131,10 @@ class Set:
         self.name = name
         
     def name_():
-        """Name of the fuzzy set."""
+        """Name of the fuzzy set.
+        
+        Tricky because it's coupled to the domain assignment.
+        """
         def fget(self):
             return self._name
         def fset(self, value):
@@ -143,7 +147,10 @@ class Set:
     del name_
     
     def domain_():
-        """Domain of the fuzzy set."""
+        """Domain of the fuzzy set.
+        
+        Tricky because it's coupled to the domain assignment.
+        """
         def fget(self):
             return self._domain
         def fset(self, value):
@@ -179,7 +186,7 @@ class Set:
         return Set(simple_disjoint_sum(self.func, other.func))
 
     def __pow__(self, power):
-        """pow is used with hedges"""
+        #FYI: pow is used with hedges
         return Set(lambda x: pow(self.func(x), power))
     
     def __eq__(self, other):
@@ -189,32 +196,32 @@ class Set:
             # represent the same recursive functions - 
             # additionally, there are infinitely many mathematically equivalent 
             # functions that don't have the same bytecode...
-            raise FuzzyWarning(f"Impossible to determine.")
+            raise FuzzyWarning("Impossible to determine.")
         else:
             # however, if domains ARE assigned (whether or not it's the same domain), 
             # we simply can check if they map to the same values 
             return array_equal(self.array(), other.array())
         
     def __le__(self, other):
-        """If this is less than other, it means this is a subset of the other."""
+        """If this <= other, it means this is a subset of the other."""
         if self.domain is None or other.domain is None:
             raise FuzzyWarning("Can't compare without Domains.")
         return all(less_equal(self.array(), other.array()))
     
     def __lt__(self, other):
-        """If this is less than other, it means this is a subset of the other."""
+        """If this < other, it means this is a proper subset of the other."""
         if self.domain is None or other.domain is None:
             raise FuzzyWarning("Can't compare without Domains.")
         return all(less(self.array(), other.array()))
     
     def __ge__(self, other):
-        """If this is greater than other, it means this is a superset of the other."""
+        """If this >= other, it means this is a superset of the other."""
         if self.domain is None or other.domain is None:
             raise FuzzyWarning("Can't compare without Domains.")
         return all(greater_equal(self.array(), other.array()))
 
     def __gt__(self, other):
-        """If this is less than other, it means this is a subset of the other."""
+        """If this > other, it means this is a proper superset of the other."""
         if self.domain is None or other.domain is None:
             raise FuzzyWarning("Can't compare without Domains.")
         return all(greater(self.array(), other.array()))
@@ -232,6 +239,9 @@ class Set:
     def relative_cardinality(self):
         if self.domain is None:
             raise FuzzyWarning("No domain.")
+        if len(self) == 0:
+            # this is highly unlikely and only possible with res=inf but still..
+            raise FuzzyWarning("The domain has no element.")
         return self.cardinality() / len(self)
         
     def plot(self, low=None, high=None, res=None):

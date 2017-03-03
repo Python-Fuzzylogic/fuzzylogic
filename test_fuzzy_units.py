@@ -299,7 +299,7 @@ class Test_Set(TestCase):
         """This also tests Set.array()."""
         assume(low < high)
         # to avoid MemoryError and runs that take forever..
-        assume(high - low <= 10000)
+        assume(high - low <= 1000)
         D1 = Domain("1", low, high, res=res)
         D1.s1 = Set(fun.bounded_linear(low, high))
         D2 = Domain("2", low, high, res=res)
