@@ -141,11 +141,8 @@ def linear(m:float=0, b:float=0) -> callable:
     return f
 
 
-def bounded_linear(low, high, *, c_m=1, no_m=0):
+def bounded_linear(low, high, *, c_m=1, no_m=0, inverse=False):
     """Variant of the linear function with gradient being determined by bounds.
-
-    THIS FUNCTION ONLY CAN HAVE A POSITIVE SLOPE -
-    USE inv() IF IT NEEDS TO BE NEGATIVE
 
     The bounds determine minimum and maximum value-mappings,
     but also the gradient. As [0, 1] must be the bounds for y-values,
@@ -171,6 +168,9 @@ def bounded_linear(low, high, *, c_m=1, no_m=0):
     assert low < high, "low must be less than high"
     assert c_m > no_m, "core_m must be greater than unsupported_m"
 
+    if inverse:
+        c_m, no_m = no_m, c_m
+    
     gradient = (c_m - no_m) / (high - low)
     
     # special cases found by hypothesis
@@ -292,7 +292,8 @@ def trapezoid(low, c_low, c_high, high, *, c_m=1, no_m=0):
     assert 0 <= no_m < c_m <= 1 
 
     left_slope = bounded_linear(low, c_low, c_m=c_m, no_m=no_m)
-    right_slope = inv(bounded_linear(c_high, high, c_m=c_m, no_m=no_m))
+    right_slope = bounded_linear(c_high, high, c_m=c_m, no_m=no_m,
+                                inverse=True)
 
     def f(x):
         if x < low or high < x:
