@@ -285,6 +285,23 @@ class Test_Combinators(TestCase):
         f = combi.simple_disjoint_sum(a, b)
         assert (0 <= f(x) <= 1)
 
+class Test_Domain(TestCase):
+    def test_basics(self):
+        d = Domain("d", 0, 10)
+        assert d.name == "d"
+        assert d.low == 0
+        assert d.high == 10
+        assert d.res == 1
+        x = Set(lambda x: 1)
+        d.s = x
+        assert d.s == x
+        assert d._sets == {"s": x}
+        R = d(3)
+        assert R == {"s": 1}
+        # repr is hard - need to repr sets first :/
+        #D = eval(repr(d))
+        #assert d == D
+        
 class Test_Set(TestCase):
     @skip("repr is complicated")
     def test_repr_unassigned(self):

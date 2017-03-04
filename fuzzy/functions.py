@@ -336,17 +336,27 @@ def sigmoid(L, k, x0):
     return f
 
 
-def bounded_sigmoid(low, high):
+def bounded_sigmoid(low, high, invert=False):
     """
     Calculates a weight based on the sigmoid function.
 
-    We specify the lower limit where f(x) = 0.1 and the
+    Specify the lower limit where f(x) = 0.1 and the
     upper with f(x) = 0.9 and calculate the steepness and elasticity
     based on these. We don't need the general logistic function as we
     operate on [0,1].
-
-    USE inv() IF IT NEEDS TO BE NEGATIVE
-
+    
+    core idea:
+    f(x) = 1. / (1. + exp(x * (4. * log(3)) / (low - high)) * 
+                9 * exp(low * -(4. * log(3)) / (low - high)))
+    
+    How I got this? IIRC I was playing around with linear equations and 
+    boundary conditions of sigmoid funcs on wolframalpha..
+    
+    previously factored to:
+    k = -(4. * log(3)) / (low - high)
+    o = 9 * exp(low * k)
+    return 1 / (1 + exp(-k * x) * o)
+    
     vars
     ----
     low: x-value with f(x) = 0.1
@@ -366,26 +376,36 @@ def bounded_sigmoid(low, high):
     """
     assert low < high, 'low must be less than high'
     
-    k = -(4. * log(3)) / (low - high)
-    # yay for limits! .. and for goddamn hidden divisions by zero thanks to floats >:/
+    if invert:
+        low, high = high, low
+    
+    k = (4. * log(3)) / (low - high)
     try:
-        m = exp(low * k)
-        # possibility of an underflow! m -> 0
-        o = 9 if isinf(k) else 9 * m
-        # o can be 0!
+        # if high - low underflows to 0..
+        if isinf(k):
+            p = 0
+        # just in case k -> 0 and low -> inf
+        elif isnan(-k * low):
+            p = 1
+        else:
+            p = exp(-k * low)
     except OverflowError:
-        o = float("inf")
-        
+        p = float("inf")
+    
     def f(x):
-        if o == 0 and x == float("-inf"):
-            return 1/2
         try:
-            # if o == 0 we get nan if x is -inf and k is positive
-            # then e^(inf*0) = 1
-            return 0.1 if isinf(k) else 1. / (1. + exp(x * -k) * o)
+            # e^(0*inf) = 1 for both -inf and +inf
+            if (isinf(k) and x == 0) or (k == 0 and isinf(x)):
+                q = 1
+            else: q = exp(x * k)
         except OverflowError:
-            return 0.0
+            q = float("inf")
         
+        # e^(inf)*e^(-inf) = 1
+        r = p * q
+        if isnan(r):
+            r = 1
+        return 1 / (1 + 9 * r)
     return f
 
 

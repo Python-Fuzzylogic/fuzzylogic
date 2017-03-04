@@ -50,7 +50,7 @@ class Domain:
     """
     _allowed_attrs = ['name', 'low', 'high', 'res', '_sets']
 
-    def __init__(self, name, low, high, res=1):
+    def __init__(self, name, low, high, *, res=1, sets:dict=None):
         assert low < high, "higher bound must be greater than lower."
         assert res > 0, "resolution can't be negative or zero"
         self.name = name
@@ -58,7 +58,7 @@ class Domain:
         self.low = low
         self.res = res
         # one should not access (especially add things) directly
-        self._sets = {}
+        self._sets = {} if sets is None else sets
 
     
     def __call__(self, x):
@@ -70,6 +70,16 @@ class Domain:
 
     def __str__(self):
         return self.name
+    
+    def __repr__(self):
+        return f"Domain('{self.name}', {self.low}, {self.high}, res={self.res}, sets={self._sets})"
+    
+    def __eq__(self, other):
+        return all([self.name == other.name,
+                   self.low == other.low,
+                   self.high == other.high,
+                   self.res == other.res,
+                   self._sets == other._sets])
 
     def __getattr__(self, name):
         if name in self._sets:
