@@ -480,7 +480,7 @@ def gauss(c, b, *, c_m=1):
         defines the symmetry center/peak of the graph
     """
     assert 0 < c_m <= 1
-    assert 0 < b
+    assert 0 < b, "b must be greater than 0"
 
     def f(x):
         try:

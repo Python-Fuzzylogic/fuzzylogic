@@ -105,6 +105,15 @@ class Domain:
         else:
             raise FuzzyWarning("Trying to delete a regular attr, this needs extra care.")
 
+    def MIN(self, x):
+        """Standard way to get the min over all membership funcs.
+        
+        It's not just more convenient but also faster than
+        to calculate all results, construct a dict, unpack the dict
+        and calculate the min from that.
+        """
+        return min(f(x) for f in self._sets.values())
+            
 class Set:
     """
     A fuzzyset defines a 'region' within a domain.
