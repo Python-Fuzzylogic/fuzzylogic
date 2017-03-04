@@ -4,10 +4,11 @@ from math import isclose
 from unittest import TestCase, skip
 import numpy as np
 
-from fuzzy.classes import Domain, Set, Rule
+from fuzzy.classes import Domain, Set
 from fuzzy import functions as fun
 from fuzzy import hedges
 from fuzzy import combinators as combi
+import fuzzy.rules as ru
 
 class Test_Functions(TestCase):
     @given(st.floats(allow_nan=False))
@@ -344,3 +345,17 @@ class Test_Set(TestCase):
         D.s1 = Set(fun.bounded_linear(3, 12))
         D.s2 = ~~D.s1
         assert all(np.isclose(D.s1.array(), D.s2.array()))
+        
+
+class Test_Rules(TestCase):
+    @given(st.floats(min_value=0, max_value=1),
+           st.floats(min_value=0, max_value=1),
+           st.floats(min_value=0, max_value=1),
+           st.floats(allow_infinity=False, allow_nan=False),
+          st.floats(allow_infinity=False, allow_nan=False))
+    def test_scaling(self, x, IN_min, IN_max, OUT_min, OUT_max):
+        assume(IN_min < IN_max)
+        assume(IN_min <= x <= IN_max)
+        assume(OUT_min < OUT_max)
+        f = ru.scale(OUT_min, OUT_max, IN_min=IN_min, IN_max=IN_max) 
+        assert (OUT_min <= f(x) <= OUT_max)
