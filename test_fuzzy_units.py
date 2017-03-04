@@ -359,3 +359,8 @@ class Test_Rules(TestCase):
         assume(OUT_min < OUT_max)
         f = ru.scale(OUT_min, OUT_max, IN_min=IN_min, IN_max=IN_max) 
         assert (OUT_min <= f(x) <= OUT_max)
+        
+    @given(st.floats(allow_nan=False),
+          st.floats(allow_nan=False))
+    def round_partial(self, x, res):
+        assert(isclose(x, ru.round_partial(x, res), res=res))
