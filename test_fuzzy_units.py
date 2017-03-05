@@ -356,11 +356,11 @@ class Test_Rules(TestCase):
            st.floats(allow_infinity=False, allow_nan=False),
            st.floats(min_value=0, max_value=1),
            st.floats(min_value=0, max_value=1))
-    def test_scale(self, x, out_min, out_max, in_min, in_max):
+    def test_rescale(self, x, out_min, out_max, in_min, in_max):
         assume(in_min < in_max)
         assume(in_min <= x <= in_max)
         assume(out_min < out_max)
-        f = ru.scale(out_min, out_max) 
+        f = ru.rescale(out_min, out_max) 
         assert (out_min <= f(x) <= out_max)
         
     @given(st.floats(allow_nan=False),

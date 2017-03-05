@@ -26,7 +26,7 @@ def round_partial(value, res):
         return value
     return round(value / res) * res
 
-def scale(out_min, out_max, *, in_min=0, in_max=1):
+def rescale(out_min, out_max, *, in_min=0, in_max=1):
     """Scale from one domain to another.
     
     Tests only cover scaling from [0,1] (with default in_min, in_max!)
@@ -66,9 +66,10 @@ def weighted_sum(*, weights:dict, target:Domain) -> float:
     there MUST be at least as many items in weights as factors.
     """
     assert sum(w for w in weights.values()) == 1
-    S = scale(target.low, target.high)
+
+    rsc = rescale(target.low, target.high)
     
-    def f(factors):
-        RES = sum(r * weights[n] for n, r in factors.items())
-        return S(round_partial(RES, target.res))
+    def f(memberships):
+        result = sum(r * weights[n] for n, r in memberships.items())
+        return round_partial(rsc(result), target.res)
     return f

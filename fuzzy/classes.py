@@ -113,7 +113,7 @@ class Domain:
         """
         return arange(self.low, self.high, self.res)
             
-    def MIN(self, x):
+    def min(self, x):
         """Standard way to get the min over all membership funcs.
         
         It's not just more convenient but also faster than
@@ -122,7 +122,7 @@ class Domain:
         """
         return min(f(x) for f in self._sets.values())
     
-    def MAX(self, x):
+    def max(self, x):
         """Standard way to get the max over all membership funcs.
         """
         return max(f(x) for f in self._sets.values())
