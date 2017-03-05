@@ -121,6 +121,11 @@ class Domain:
         and calculate the min from that.
         """
         return min(f(x) for f in self._sets.values())
+    
+    def MAX(self, x):
+        """Standard way to get the max over all membership funcs.
+        """
+        return max(f(x) for f in self._sets.values())
             
 class Set:
     """
@@ -283,12 +288,10 @@ class Set:
         plt.plot(R, V)
     
     def array(self):
-        # arange may not be ideal for this
         if self.domain is None:
             raise FuzzyWarning("No domain assigned.")
-        return fromiter((self.func(x) for x in arange(self.domain.low,
-                                                     self.domain.high,
-                                                     self.domain.res)), float)
+        return fromiter((self.func(x) for x in self.domain.range()),
+                        float)
 
     def __repr__(self):
         """
