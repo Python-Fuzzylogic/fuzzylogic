@@ -312,12 +312,15 @@ class Test_Set(TestCase):
     
     @given(st.floats(allow_nan=False, allow_infinity=False),
            st.floats(allow_nan=False, allow_infinity=False),
-          st.floats(min_value=0.000001, max_value=1))
+          st.floats(min_value=0.0001, max_value=1))
     def test_eq(self, low, high, res):
-        """This also tests Set.array()."""
+        """This also tests Set.array().
+        This test can massively slow down hypothesis with even 
+        reasonably large/small values.
+        """
         assume(low < high)
         # to avoid MemoryError and runs that take forever..
-        assume(high - low <= 1000)
+        assume(high - low <= 100)
         D1 = Domain("1", low, high, res=res)
         D1.s1 = Set(fun.bounded_linear(low, high))
         D2 = Domain("2", low, high, res=res)
@@ -349,16 +352,16 @@ class Test_Set(TestCase):
 
 class Test_Rules(TestCase):
     @given(st.floats(min_value=0, max_value=1),
-           st.floats(min_value=0, max_value=1),
-           st.floats(min_value=0, max_value=1),
            st.floats(allow_infinity=False, allow_nan=False),
-          st.floats(allow_infinity=False, allow_nan=False))
-    def test_scaling(self, x, IN_min, IN_max, OUT_min, OUT_max):
-        assume(IN_min < IN_max)
-        assume(IN_min <= x <= IN_max)
-        assume(OUT_min < OUT_max)
-        f = ru.scale(OUT_min, OUT_max, IN_min=IN_min, IN_max=IN_max) 
-        assert (OUT_min <= f(x) <= OUT_max)
+           st.floats(allow_infinity=False, allow_nan=False),
+           st.floats(min_value=0, max_value=1),
+           st.floats(min_value=0, max_value=1))
+    def test_scale(self, x, out_min, out_max, in_min, in_max):
+        assume(in_min < in_max)
+        assume(in_min <= x <= in_max)
+        assume(out_min < out_max)
+        f = ru.scale(out_min, out_max) 
+        assert (out_min <= f(x) <= out_max)
         
     @given(st.floats(allow_nan=False),
           st.floats(allow_nan=False))

@@ -105,6 +105,14 @@ class Domain:
         else:
             raise FuzzyWarning("Trying to delete a regular attr, this needs extra care.")
 
+    def range(self):
+        """Return an arange object with the domain's specifics.
+        
+        This is used to conveniently iterate over all possible values
+        for plotting etc.
+        """
+        return arange(self.low, self.high, self.res)
+            
     def MIN(self, x):
         """Standard way to get the min over all membership funcs.
         
@@ -263,18 +271,14 @@ class Set:
             raise FuzzyWarning("The domain has no element.")
         return self.cardinality() / len(self)
         
-    def plot(self, low=None, high=None, res=None):
+    def plot(self):
         """Graph the set.
         Use the bounds and resolution of the domain to display the set
         unless specified otherwise.
         """
         if self.domain is None:
             raise FuzzyWarning("No domain assigned, cannot plot.")
-
-        low = self.domain.low if low is None else low
-        high = self.domain.high if high is None else high
-        res = self.domain.res if res is None else res
-        R = arange(low, high, res)
+        R = self.domain.range()
         V = [self.func(x) for x in R]
         plt.plot(R, V)
     
@@ -322,41 +326,6 @@ class Set:
             return Set(normalize(max(self.array()), self.func), 
                             domain=self.domain,
                             name=f"normalized_{self.name}")
-
-class Rule:
-    """
-    A rule is used to combine fuzzysets of different domains, aggregating the
-    results of the previous calculations.
-
-    It works like this:
-    >>> temp = Domain("temperature", 0, 100)
-    >>> temp.hot = Set(lambda x: 1)
-    >>> dist = Domain("distance", 0, 300)
-    >>> dist.close = Set(lambda x: 0)
-    
-    #>>> r = Rule(min, ["distance.close", "temperature.hot"])
-    #>>> d1 = temp(32)   # {'temperature.hot': 1}
-    #>>> d2 = dist(5)    # {'distance.close': 0}
-    #>>> d = d1.copy()   # need to merge the results of the Domains
-    #>>> d.update(d2)    # for py3.5: https://www.python.org/dev/peps/pep-0448/
-    #>>> r(d)    # min(1, 0)
-    #0
-
-    Calling the domains MAY be done async for better performance, a rule only
-    needs the dict with the qualified fuzzysets.
-    """
-    def __init__(self, *, OR:callable, AND:callable, IN:list, OUT:list):
-        self.OR = OR
-        self.AND = AND
-        self.IN = IN
-        self.OUT = OUT
-
-    def evaluate(self):
-        pass
-
-    def plot(self):
-        pass
-
 
 if __name__ == "__main__":
     import doctest

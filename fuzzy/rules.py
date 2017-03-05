@@ -26,31 +26,32 @@ def round_partial(value, res):
         return value
     return round(value / res) * res
 
-def scale(OUT_min, OUT_max, *, IN_min=0, IN_max=1):
+def scale(out_min, out_max, *, in_min=0, in_max=1):
     """Scale from one domain to another.
     
-    Works best for [0,1] -> R. 
+    Tests only cover scaling from [0,1] (with default in_min, in_max!)
+    to R.
     
-    For R -> R additional testing is required, 
+    For arbitrary R -> R additional testing is required,
     but it should work in general out of the box.
     
-    Originally used the naive algo from SO
+    Originally used the algo from SO
     (OUT_max - OUT_min)*(x - IN_min) / (IN_max - IN_min) + OUT_min
     but there are too many edge cases thanks to over/underflows.
     Current factorized algo was proposed as equivalent by wolframalpha, 
     which seems more stable.
     """
-    assert IN_min < IN_max
+    assert in_min < in_max
+    
+    # for easier handling of the formula
+    a = out_min
+    b = out_max
+    c = in_min
+    d = in_max
         
     def f(x):
-        if x == IN_min:
-            return OUT_min
-        elif x == IN_max:
-            return OUT_max
-        return (OUT_min * IN_min - OUT_min * x - 
-         2 * OUT_max *  IN_min + OUT_max * IN_max + IN_max * x) / (
-            IN_max - IN_min)
-        
+        y = (a*d - a*x - b*c + b*x) / (d - c)
+        return y
     return f
 
 
