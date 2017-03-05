@@ -40,10 +40,10 @@ class Test_Weighted(TestCase):
         """
         self.R = Domain("rating", 1, 10, res=0.1)
         self.R.norm = Set(bounded_linear(1, 10))
-        self.weights = weights = {"beverage": 0.3, 
-                                  "atmosphere": 0.2, 
-                                   "looks":0.2,
-                                   "taste": 0.3}
+        self.weights = {"beverage": 0.3, 
+                        "atmosphere": 0.2, 
+                        "looks":0.2,
+                        "taste": 0.3}
         self.w_func = weighted_sum(weights=self.weights, target=self.R)      
     
     def test_rating(self):
