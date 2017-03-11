@@ -1,9 +1,8 @@
-FROM ubuntu:14.10
-MAINTAINER Anselm Kiefner <fuzzy@anselm.kiefner.de>
+FROM ubuntu:16.10
 RUN apt-get update && apt-get -y install python3-pip
-RUN pip3 install numpy
+RUN pip3 install matplotlib
 RUN pip3 install "ipython[notebook]"
 
-COPY . /fuzzylogic
+COPY . /fuzzy
 
 ENV PATH $HOME/.local/bin:$PATH
