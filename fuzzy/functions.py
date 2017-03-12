@@ -101,6 +101,7 @@ def beta(func,
             return ceiling_clip
         else: 
             return m
+    return f
 
 def normalize(height, func):
     assert 0 < height <= 1
