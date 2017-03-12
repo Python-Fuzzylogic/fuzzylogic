@@ -85,9 +85,9 @@ def alpha(floor, ceiling, func):
             return m
     return f
 
-def beta(floor=0.1, floor_clip=0, 
-         ceiling=0.9, ceiling_clip=1, 
-         func):
+def beta(func, 
+         floor=0.1, floor_clip=0, 
+         ceiling=0.9, ceiling_clip=1):
     """The odd brother of alpha. Also a metafunction.
     Clips values to upper and/or lower bounderies without affecting
     the values outside the bounderies."""
