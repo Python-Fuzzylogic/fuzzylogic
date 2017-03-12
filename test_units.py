@@ -9,6 +9,7 @@ from fuzzy import functions as fun
 from fuzzy import hedges
 from fuzzy import combinators as combi
 import fuzzy.rules as ru
+from fuzzy import truth
 
 class Test_Functions(TestCase):
     @given(st.floats(allow_nan=False))
@@ -367,3 +368,22 @@ class Test_Rules(TestCase):
           st.floats(allow_nan=False))
     def round_partial(self, x, res):
         assert(isclose(x, ru.round_partial(x, res), res=res))
+        
+class Test_Truth(TestCase):
+    @given(st.floats(min_value=0, max_value=1))
+    def test_TRUE_AND_FALSE(self, m):
+        t = truth.TRUE()
+        f = truth.FALSE()
+        assert t(m) + f(m) == 1
+    
+    @given(st.floats(min_value=0, max_value=1))
+    def test_VERY_FALSE_AND_FAIRLY_TRUE(self, m):
+        t = truth.VERY_FALSE()
+        f = truth.FAIRLY_TRUE()
+        assert t(m) + f(m) == 0
+        
+    @given(st.floats(min_value=0, max_value=1))
+    def test_FAIRLY_FALSE_AND_VERY_TRUE(self, m):
+        t = truth.FAIRLY_FALSE()
+        f = truth.VERY_TRUE()
+        assert t(m) + f(m) == 0

@@ -5,8 +5,10 @@ TRUTH QUALIFICATION
 -------------------
 Functions that transform a given membership value to a truth value.
 
-How this can be useful? Beats me. Found it somewhere on the internet, never needed it.
+How this can be useful? Beats me. Found it somewhere on the internet, 
+never needed it.
 """
+from math import sqrt
 
 
 def TRUE():
@@ -15,13 +17,17 @@ def TRUE():
         return m
     return f
 
-
-def VERY_TRUE():
-    """Part of a circle in quadrant IV."""
+def FALSE():
+    """The opposite of TRUE."""
     def f(m):
-        return -sqrt(1 - m ** 2)
+        return 1 - m
     return f
 
+def FAIRLY_FALSE():
+    """Part of a circle in quadrant I."""
+    def f(m):
+        return sqrt(1 - m ** 2)
+    return f
 
 def FAIRLY_TRUE():
     """Part of a circle in quadrant II."""
@@ -29,23 +35,14 @@ def FAIRLY_TRUE():
         return sqrt(1 - (1 - m) ** 2)
     return f
 
-
-def FALSE():
-    """The opposite of TRUE."""
-    def f(m):
-        return 1 - m
-    return f
-
-
 def VERY_FALSE():
     """Part of a circle in quadrant III."""
     def f(m):
         return -sqrt(1 - (1 - m) ** 2)
     return f
 
-
-def FAIRLY_FALSE():
-    """Part of a circle in quadrant I."""
+def VERY_TRUE():
+    """Part of a circle in quadrant IV."""
     def f(m):
-        return sqrt(1 - m ** 2)
+        return -sqrt(1 - m ** 2)
     return f
