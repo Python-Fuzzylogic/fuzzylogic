@@ -66,7 +66,7 @@ def constant(c):
     return f
 
 
-def alpha(floor, ceiling, func):
+def alpha(*, floor=0, ceiling=1, func):
     """Function to clip a function.
     This is used to either cut off the upper or lower part of a graph.
     Actually, this is more like a hedge but doesn't make sense for sets.
@@ -85,12 +85,13 @@ def alpha(floor, ceiling, func):
             return m
     return f
 
-def beta(func, 
+def beta(*, func, 
          floor=0.1, floor_clip=0, 
          ceiling=0.9, ceiling_clip=1):
     """The odd brother of alpha. Also a metafunction.
     Clips values to upper and/or lower bounderies without affecting
-    the values outside the bounderies."""
+    the values outside the bounderies.
+    """
     assert floor < ceiling
     
     def f(x):

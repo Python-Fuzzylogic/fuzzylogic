@@ -35,7 +35,7 @@ class Test_Functions(TestCase):
             st.floats(min_value=0, max_value=1))
     def test_alpha(self, x, lower, upper):
         assume(lower < upper)
-        f = fun.alpha(lower, upper, fun.noop())
+        f = fun.alpha(floor=lower, ceiling=upper, func=fun.noop())
         if x <= lower:
             assert f(x) == lower
         elif x >= upper:
@@ -47,7 +47,8 @@ class Test_Functions(TestCase):
             st.floats(min_value=0, max_value=1))
     def test_normalize(self, x, height):
         assume(0 < height)
-        f = fun.normalize(height, fun.alpha(0, height, fun.R(0,100)))
+        f = fun.normalize(height, fun.alpha(ceiling=height, 
+                                            func=fun.R(0,100)))
         assert (0 <= f(x) <= 1)       
 
     @given(st.floats(),
