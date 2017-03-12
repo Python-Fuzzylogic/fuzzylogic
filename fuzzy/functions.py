@@ -76,13 +76,31 @@ def alpha(floor, ceiling, func):
     assert 1 >= ceiling
     
     def f(x):
-        if func(x) >= ceiling:
+        m = func(x)
+        if m >= ceiling:
             return ceiling
-        elif func(x) <= floor:
+        elif m <= floor:
             return floor
         else: 
-            return func(x)
+            return m
     return f
+
+def beta(floor=0.1, floor_clip=0, 
+         ceiling=0.9, ceiling_clip=1, 
+         func):
+    """The odd brother of alpha. Also a metafunction.
+    Clips values to upper and/or lower bounderies without affecting
+    the values outside the bounderies."""
+    assert floor < ceiling
+    
+    def f(x):
+        m = func(x)
+        if m < floor:
+            return floor_clip
+        elif m > ceiling:
+            return ceiling_clip
+        else: 
+            return m
 
 def normalize(height, func):
     assert 0 < height <= 1
