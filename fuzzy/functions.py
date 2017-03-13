@@ -356,7 +356,7 @@ def sigmoid(L, k, x0):
     return f
 
 
-def bounded_sigmoid(low, high, invert=False):
+def bounded_sigmoid(low, high, inverse=False):
     """
     Calculates a weight based on the sigmoid function.
 
@@ -396,7 +396,7 @@ def bounded_sigmoid(low, high, invert=False):
     """
     assert low < high, 'low must be less than high'
     
-    if invert:
+    if inverse:
         low, high = high, low
     
     k = (4. * log(3)) / (low - high)

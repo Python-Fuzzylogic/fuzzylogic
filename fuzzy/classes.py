@@ -5,8 +5,8 @@ import numpy as np
 from logging import warn
 import pickle
 
-from fuzzy.functions import inv, normalize
-from fuzzy.combinators import MAX, MIN, product, bounded_sum, simple_disjoint_sum
+from . functions import inv, normalize
+from . combinators import MAX, MIN, product, bounded_sum, simple_disjoint_sum
 
 class FuzzyWarning(UserWarning):
     pass
