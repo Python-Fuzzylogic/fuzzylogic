@@ -5,8 +5,8 @@ import numpy as np
 from logging import warn
 import pickle
 
-from . functions import inv, normalize
-from . combinators import MAX, MIN, product, bounded_sum, simple_disjoint_sum
+from .functions import inv, normalize
+from .combinators import MAX, MIN, product, bounded_sum, simple_disjoint_sum
 
 class FuzzyWarning(UserWarning):
     pass
@@ -275,6 +275,28 @@ class Set:
             # this is highly unlikely and only possible with res=inf but still..
             raise FuzzyWarning("The domain has no element.")
         return self.cardinality() / len(self)
+    
+    def concentrated(self):
+        """
+        Returns an new array that has a reduced amount of values the set includes and to dampen the
+        membership of many values.
+        TODO: implement this as a new set?
+        """
+        return NotImplemented
+        
+        return self.array ** 2
+
+    def intensified(self):
+        """
+        Returns a new array where the membershi of values are increased that 
+        already strongly belong to the set and dampened the rest.
+        TODO: implement this as a new set?
+        """
+        return NotImplemented
+        if x < 0.5:
+            return 2 * x**2
+        else:
+            return 1 - 2(1 - x**2)
         
     def plot(self):
         """Graph the set.
