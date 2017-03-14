@@ -298,6 +298,18 @@ class Set:
         else:
             return 1 - 2(1 - x**2)
         
+    def dilatated(self):
+        """Expands the set with more values and already included values are enhanced.
+        TODO: implement this as a new set?"""
+        return NotImplemented
+        return x ** 1./2.
+
+    def multiplication(self, n):
+        """Set is multiplied with a constant factor, which changes all membership values.
+        TODO: implement this as a new set?"""
+        return NotImplemented
+        return x * n
+        
     def plot(self):
         """Graph the set.
         Use the bounds and resolution of the domain to display the set
