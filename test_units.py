@@ -42,6 +42,19 @@ class Test_Functions(TestCase):
             assert f(x) == upper
         else:
             assert f(x) == x
+    
+    @given(st.floats(allow_nan=False),
+            st.floats(min_value=0, max_value=1),
+            st.floats(min_value=0, max_value=1),
+            st.floats(min_value=0, max_value=1) | st.none(),
+            st.floats(min_value=0, max_value=1) | st.none())
+    def test_alpha_2(self, x, floor, ceil, floor_clip, ceil_clip):
+        assume(floor < ceil)
+        if not(floor_clip is None or ceil_clip is None):
+            assume(floor_clip < ceil_clip)
+        f = fun.alpha(floor=floor, ceiling=ceil, func=fun.noop(),
+                     floor_clip=floor_clip, ceiling_clip=ceil_clip)
+        assert 0 <= f(x) <= 1
             
     @given(st.floats(allow_nan=False),
             st.floats(min_value=0, max_value=1))
@@ -372,19 +385,13 @@ class Test_Rules(TestCase):
         
 class Test_Truth(TestCase):
     @given(st.floats(min_value=0, max_value=1))
-    def test_TRUE_AND_FALSE(self, m):
-        t = truth.TRUE()
-        f = truth.FALSE()
-        assert t(m) + f(m) == 1
+    def test_true_and_false(self, m):
+        assert truth.true(m) + truth.false(m) == 1
     
     @given(st.floats(min_value=0, max_value=1))
-    def test_VERY_FALSE_AND_FAIRLY_TRUE(self, m):
-        t = truth.VERY_FALSE()
-        f = truth.FAIRLY_TRUE()
-        assert t(m) + f(m) == 0
+    def test_very_false_and_fairly_true(self, m):
+        assert truth.very_false(m) + truth.fairly_true(m) == 0
         
     @given(st.floats(min_value=0, max_value=1))
-    def test_FAIRLY_FALSE_AND_VERY_TRUE(self, m):
-        t = truth.FAIRLY_FALSE()
-        f = truth.VERY_TRUE()
-        assert t(m) + f(m) == 0
+    def test_fairly_false_and_very_true(self, m):
+        assert truth.fairly_false(m) + truth.very_true(m) == 0

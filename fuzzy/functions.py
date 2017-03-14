@@ -66,40 +66,27 @@ def constant(c):
     return f
 
 
-def alpha(*, floor=0, ceiling=1, func):
+def alpha(*, floor=0, ceiling=1, func,  
+          floor_clip=None, ceiling_clip=None):
     """Function to clip a function.
     This is used to either cut off the upper or lower part of a graph.
     Actually, this is more like a hedge but doesn't make sense for sets.
     """
     assert floor <= ceiling
     assert 0 <= floor
-    assert 1 >= ceiling
+    assert ceiling <= 1
+    
+    floor_clip = floor if floor_clip is None else floor_clip
+    ceiling_clip = ceiling if ceiling_clip is None else ceiling_clip
+    
+    #assert 0 <= floor_clip <= ceiling_clip <= 1, "%s <= %s"%(floor_clip, ceiling_clip)
     
     def f(x):
         m = func(x)
         if m >= ceiling:
-            return ceiling
-        elif m <= floor:
-            return floor
-        else: 
-            return m
-    return f
-
-def beta(*, func, 
-         floor=0.1, floor_clip=0, 
-         ceiling=0.9, ceiling_clip=1):
-    """The odd brother of alpha. Also a metafunction.
-    Clips values to upper and/or lower bounderies without affecting
-    the values outside the bounderies.
-    """
-    assert floor < ceiling
-    
-    def f(x):
-        m = func(x)
-        if m < floor:
-            return floor_clip
-        elif m > ceiling:
             return ceiling_clip
+        elif m <= floor:
+            return floor_clip
         else: 
             return m
     return f
@@ -242,18 +229,19 @@ def R(low, high):
 
 
 def S(low, high):
-    """Simple alternative for inv(bounded_linear()
+    """Simple alternative for bounded_linear(.. inverse=True)
     THIS FUNCTION ONLY CAN HAVE A NEGATIVE SLOPE -
     USE THE R() FUNCTION FOR POSITIVE SLOPE.
     """
     assert low < high, "low must be less than high"
 
     def f(x):
-        if x < low:
+        if x <= low:
             return 1
-        if low <= x <= high:
-            return (high - x) / (high - low)
-        if high < x:
+        if low < x < high:
+            # factorized to avoid nan
+            return high / (high - low) - x / (high - low) 
+        if high <= x:
             return 0
     return f
 

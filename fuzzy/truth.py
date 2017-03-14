@@ -11,38 +11,26 @@ never needed it.
 from math import sqrt
 
 
-def TRUE():
+def true(m):
     """The membership-value is its own truth-value."""
-    def f(m):
-        return m
-    return f
+    return m
 
-def FALSE():
+def false(m):
     """The opposite of TRUE."""
-    def f(m):
-        return 1 - m
-    return f
+    return 1 - m
 
-def FAIRLY_FALSE():
+def fairly_false(m):
     """Part of a circle in quadrant I."""
-    def f(m):
-        return sqrt(1 - m ** 2)
-    return f
+    return sqrt(1 - m ** 2)
 
-def FAIRLY_TRUE():
+def fairly_true(m):
     """Part of a circle in quadrant II."""
-    def f(m):
-        return sqrt(1 - (1 - m) ** 2)
-    return f
+    return sqrt(1 - (1 - m) ** 2)
 
-def VERY_FALSE():
+def very_false(m):
     """Part of a circle in quadrant III."""
-    def f(m):
-        return -sqrt(1 - (1 - m) ** 2)
-    return f
+    return -sqrt(1 - (1 - m) ** 2)
 
-def VERY_TRUE():
+def very_true(m):
     """Part of a circle in quadrant IV."""
-    def f(m):
-        return -sqrt(1 - m ** 2)
-    return f
+    return -sqrt(1 - m ** 2)
