@@ -97,6 +97,15 @@ def normalize(height, func):
     def f(x):
         return func(x) / height
     return f
+
+def moderate(func):
+    """This function maps [0,1] -> [0,1] with bias towards 0.5.
+
+    For instance this is needed to dampen extremes.
+    """
+    def f(x):
+        return 1/2 + 4 * (func(x) - 1/2)**3
+    return f
     
 ########################
 # MEMBERSHIP FUNCTIONS #
@@ -216,7 +225,7 @@ def R(low, high):
     USE THE S() FUNCTION FOR NEGATIVE SLOPE.
     """
 
-    assert low < high, "low must be less than high."
+    assert low < high, f"{low}, {high}"
 
     def f(x):
         if x < low:
@@ -233,7 +242,7 @@ def S(low, high):
     THIS FUNCTION ONLY CAN HAVE A NEGATIVE SLOPE -
     USE THE R() FUNCTION FOR POSITIVE SLOPE.
     """
-    assert low < high, "low must be less than high"
+    assert low < high, f"{low}, {high}"
 
     def f(x):
         if x <= low:
@@ -254,7 +263,7 @@ def rectangular(low:float, high:float, *, c_m:float=1, no_m:float=0) -> callable
     ____|    |___
     """
 
-    assert low < high, 'left must be less than right.'
+    assert low < high, f'{low}, {high}'
 
     def f(x:float) -> float:
         if x < low:

@@ -62,7 +62,12 @@ class Test_Functions(TestCase):
         assume(0 < height)
         f = fun.normalize(height, fun.alpha(ceiling=height, 
                                             func=fun.R(0,100)))
-        assert (0 <= f(x) <= 1)       
+        assert (0 <= f(x) <= 1)
+        
+    @given(st.floats(min_value=0, max_value=1))
+    def test_moderate(self, x):
+        f = fun.moderate(fun.noop())
+        assert 0 <= f(x) <= 1
 
     @given(st.floats(),
            st.floats(),
