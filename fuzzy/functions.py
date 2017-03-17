@@ -1,11 +1,9 @@
 
 """
---------------------
-FUZZY FUNCTIONS
---------------------
-Collection of general-purpose functions that map a value X onto the
-unit-interval [0,1]. These functions work as closures. The inner function uses
-the variables of the outer function.
+General-purpose functions that map R -> [0,1].
+
+These functions work as closures. 
+The inner function uses the variables of the outer function.
 
 These functions work in two steps: prime and call.
 In the first step the function is constructed, initialized and
@@ -38,6 +36,7 @@ from math import exp, log, sqrt, isinf, isnan
 
 def inv(g):
     """Invert the given function within the unit-interval.
+    
     For sets, the ~ operator uses this. It is equivalent to the TRUTH value of FALSE.
     """
     def f(x):
@@ -47,6 +46,7 @@ def inv(g):
 
 def noop():
     """Do nothing and return the value as is.
+    
     Useful for testing.
     """
     def f(x):
@@ -54,13 +54,13 @@ def noop():
     return f
 
 def constant(c):
-    """Always return the same value, no matter the input.
+    """Return always the same value, no matter the input.
+    
     Useful for testing.
     >>> f = constant(1)
     >>> f(0)
     1
     """
-
     def f(x):
         return c
     return f
@@ -68,7 +68,8 @@ def constant(c):
 
 def alpha(*, floor=0, ceiling=1, func,  
           floor_clip=None, ceiling_clip=None):
-    """Function to clip a function.
+    """Clip a function's values.
+    
     This is used to either cut off the upper or lower part of a graph.
     Actually, this is more like a hedge but doesn't make sense for sets.
     """
@@ -92,6 +93,7 @@ def alpha(*, floor=0, ceiling=1, func,
     return f
 
 def normalize(height, func):
+    """Map [0,1] to [0,1] so that max(array) == 1."""
     assert 0 < height <= 1
     
     def f(x):
@@ -99,7 +101,7 @@ def normalize(height, func):
     return f
 
 def moderate(func):
-    """This function maps [0,1] -> [0,1] with bias towards 0.5.
+    """Map [0,1] -> [0,1] with bias towards 0.5.
 
     For instance this is needed to dampen extremes.
     """
@@ -113,13 +115,13 @@ def moderate(func):
 
 def singleton(p, *, no_m=0, c_m=1):
     """A single spike.
+    
     >>> f = singleton(2)
     >>> f(1)
     0
     >>> f(2)
     1
     """
-
     assert 0 <= no_m < c_m <= 1
 
     def f(x):
@@ -129,6 +131,7 @@ def singleton(p, *, no_m=0, c_m=1):
 
 def linear(m:float=0, b:float=0) -> callable:
     """A textbook linear function with y-axis section and gradient.
+    
     f(x) = m*x + b
     BUT CLIPPED.
 
@@ -221,10 +224,10 @@ def bounded_linear(low, high, *, c_m=1, no_m=0, inverse=False):
 
 def R(low, high):
     """Simple alternative for bounded_linear().
+    
     THIS FUNCTION ONLY CAN HAVE A POSITIVE SLOPE -
     USE THE S() FUNCTION FOR NEGATIVE SLOPE.
     """
-
     assert low < high, f"{low}, {high}"
 
     def f(x):
@@ -238,7 +241,8 @@ def R(low, high):
 
 
 def S(low, high):
-    """Simple alternative for bounded_linear(.. inverse=True)
+    """Simple alternative for bounded_linear.
+    
     THIS FUNCTION ONLY CAN HAVE A NEGATIVE SLOPE -
     USE THE R() FUNCTION FOR POSITIVE SLOPE.
     """
@@ -257,12 +261,11 @@ def S(low, high):
 
 def rectangular(low:float, high:float, *, c_m:float=1, no_m:float=0) -> callable:
     """Basic rectangular function that returns the core_y for the core else 0.
-    -----
+    
         ______
         |    |
     ____|    |___
     """
-
     assert low < high, f'{low}, {high}'
 
     def f(x:float) -> float:
@@ -277,7 +280,7 @@ def rectangular(low:float, high:float, *, c_m:float=1, no_m:float=0) -> callable
 
 
 def triangular(low, high, *, c=None, c_m=1, no_m=0):
-    """Basic triangular norm as combination of two linear functions.
+    r"""Basic triangular norm as combination of two linear functions.
 
          /\
     ____/  \___
@@ -298,13 +301,13 @@ def triangular(low, high, *, c=None, c_m=1, no_m=0):
 
 
 def trapezoid(low, c_low, c_high, high, *, c_m=1, no_m=0):
-    """Combination of rectangular and triangular, for convenience.
+    r"""Combination of rectangular and triangular, for convenience.
+    
           ____
          /    \
     ____/      \___
 
     """
-
     assert low < c_low <= c_high < high
     assert 0 <= no_m < c_m <= 1 
 
@@ -355,7 +358,7 @@ def sigmoid(L, k, x0):
 
 def bounded_sigmoid(low, high, inverse=False):
     """
-    Calculates a weight based on the sigmoid function.
+    Calculate a weight based on the sigmoid function.
 
     Specify the lower limit where f(x) = 0.1 and the
     upper with f(x) = 0.9 and calculate the steepness and elasticity
@@ -458,6 +461,7 @@ def simple_sigmoid(k=0.229756):
 
 def triangular_sigmoid(low, high, c=None):
     """Version of triangular using sigmoids instead of linear.
+    
     THIS FUNCTION PEAKS AT 0.9
 
     >>> g = triangular_sigmoid(2, 4)
@@ -466,7 +470,6 @@ def triangular_sigmoid(low, high, c=None):
     >>> round(g(3), 2)
     0.9
     """
-
     assert low < high, "low must be less than high"
     c = c if c is not None else (low + high) / 2.
     assert low < c < high, "c must be inbetween"
@@ -485,6 +488,7 @@ def triangular_sigmoid(low, high, c=None):
 
 def gauss(c, b, *, c_m=1):
     """Defined by ae^(-b(x-x0)^2), a gaussian distribution.
+    
     Basically a triangular sigmoid function, it comes close to human perception.
 
     vars

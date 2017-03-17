@@ -1,16 +1,15 @@
 
 """
-------
-HEDGES
-------
-Lingual hedges modify curves describing truthvalues.
+Lingual hedges modify curves of membership values.
+
 These work with sets only. It's more trouble than it is worth making
 these work with pure functions, so meta-functionality was removed.
 """
 
-from fuzzy.classes import Set
+from .classes import Set
 
 def very(g):
+    """Sharpen memberships so that only the values close 1 stay at the top."""
     def s_f(g):
         def f(x):
             return g(x) ** 2
@@ -19,6 +18,7 @@ def very(g):
 
 
 def plus(g):
+    """Sharpen memberships like 'very' but not as strongly."""
     def s_f(g):
         def f(x):
             return g(x) ** 1.25
@@ -27,6 +27,7 @@ def plus(g):
     
 
 def minus(g):
+    """Increase membership support so that more values hit the top."""
     def s_f(g):
         def f(x):
             return g(x) ** 0.75

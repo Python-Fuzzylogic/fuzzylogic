@@ -1,12 +1,8 @@
 
 """
------------
-COMBINATORS
------------
-Linguistic terms (membership functions of two different FuzzySets of the same domain) 
-are combined.
+Combine two linguistic terms.
 
-a and b are functions.
+a and b are functions of two sets of the same domain.
 
 Since these combinators are used directly in the Set class to implement logic operations, 
 the most obvious use of this module is when subclassing Set to make use of specific combinators
@@ -70,6 +66,7 @@ def einstein_sum(a, b):
 
 def hamacher_product(a, b):
     """AND variant.
+    
     (xy) / (x + y - xy) for x, y != 0
     0 otherwise
     """
@@ -80,6 +77,7 @@ def hamacher_product(a, b):
 
 def hamacher_sum(a, b):
     """OR variant.
+    
     (x + y - 2xy) / (1 - xy) for x,y != 1
     1 otherwise
     """
@@ -106,7 +104,10 @@ def lambda_op(l):
 
 
 def gamma_op(g):
-    """A 'compensatoric' operator, combining AND with OR by a weighing factor g.
+    """Combine AND with OR by a weighing factor g.
+    
+    This is called a 'compensatoric' operator.
+    
     g (gamma-factor)
         0 < g < 1 (g == 0 -> AND; g == 1 -> OR)
         
@@ -123,7 +124,8 @@ def gamma_op(g):
     return e
 
 def simple_disjoint_sum(a, b):
-    """Implements a simple fuzzy XOR operation.
+    """Simple fuzzy XOR operation.
+    
     (A AND ~B) OR (~A AND B)
     """
     def f(z):

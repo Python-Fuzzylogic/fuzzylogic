@@ -1,9 +1,12 @@
+"""Functions to evaluate, infer and defuzzify."""
 
 from math import isinf
-from fuzzy.classes import Domain, Set
+from .classes import Domain, Set
 
 def round_partial(value, res):
     """
+    Round any value to any arbitrary precision.
+    
     >>> round_partial(0.405, 0.02)
     0.4
     >>> round_partial(0.412, 0.02)
@@ -56,7 +59,8 @@ def rescale(out_min, out_max, *, in_min=0, in_max=1):
 
 
 def weighted_sum(*, weights:dict, target:Domain) -> float:
-    """Ordinarily used for weighted decision trees and such.
+    """Used for weighted decision trees and such.
+    
     Parametrize with dict of factorname -> weight and domain of results.
     Call with a dict of factorname -> [0, 1]
     
