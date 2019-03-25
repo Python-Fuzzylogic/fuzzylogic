@@ -22,4 +22,4 @@ To make it possible to write fuzzy logic in the most pythonic and simplest way i
 Check the notebook for working examples and documentation.
 
 Have fun!
-- Anselm
+- Anselm Kiefner
