@@ -1,8 +1,9 @@
 .hypothesis
+.git
 .cache/*
 __pycache__
 .ipynb_checkpoints/
-_config.yml
+.pytest_cache
 DEV*
 TODO-fuzzy
 box

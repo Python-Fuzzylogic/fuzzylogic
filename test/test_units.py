@@ -1,5 +1,5 @@
 
-from hypothesis import given, strategies as st, assume
+from hypothesis import given, strategies as st, assume, settings, HealthCheck
 from math import isclose
 from unittest import TestCase, skip
 import numpy as np
@@ -129,6 +129,7 @@ class Test_Functions(TestCase):
       st.floats(allow_nan=False, allow_infinity=False),
       st.floats(min_value=0, max_value=1),
       st.floats(min_value=0, max_value=1))
+    @settings(suppress_health_check=[HealthCheck.filter_too_much])
     def test_triangular(self, x, low, high, c, c_m, no_m):
         assume(low < c < high)
         assume(no_m < c_m)
@@ -142,6 +143,7 @@ class Test_Functions(TestCase):
       st.floats(allow_nan=False, allow_infinity=False),
       st.floats(min_value=0, max_value=1),
       st.floats(min_value=0, max_value=1))
+    @settings(suppress_health_check=[HealthCheck.filter_too_much])
     def test_trapezoid(self, x, low, c_low, c_high, high, c_m, no_m):
         assume(low < c_low <= c_high < high)
         assume(no_m < c_m)
@@ -160,6 +162,7 @@ class Test_Functions(TestCase):
     @given(st.floats(allow_nan=False),
       st.floats(allow_nan=False, allow_infinity=False),
       st.floats(allow_nan=False, allow_infinity=False))
+    @settings(suppress_health_check=[HealthCheck.filter_too_much])
     def test_bounded_sigmoid(self, x, low, high):
         assume(low < high)
         f = fun.bounded_sigmoid(low, high)
@@ -175,6 +178,7 @@ class Test_Functions(TestCase):
       st.floats(allow_nan=False, allow_infinity=False),
       st.floats(allow_nan=False, allow_infinity=False),
       st.floats(allow_nan=False, allow_infinity=False))
+    @settings(suppress_health_check=[HealthCheck.filter_too_much])
     def test_triangular_sigmoid(self, x, low, high, c):
         assume(low < c < high)
         f = fun.triangular(low, high, c=c)
@@ -308,28 +312,22 @@ class Test_Combinators(TestCase):
 
 class Test_Domain(TestCase):
     def test_basics(self):
-        d = Domain("d", 0, 10)
-        assert d.name == "d"
-        assert d.low == 0
-        assert d.high == 10
-        assert d.res == 1
+        D = Domain("d", 0, 10)
+        assert D._name == "d"
+        assert D._low == 0
+        assert D._high == 10
+        assert D._res == 1
         x = Set(lambda x: 1)
-        d.s = x
-        assert d.s == x
-        assert d._sets == {"s": x}
-        R = d(3)
+        D.s = x
+        assert D.s == x
+        assert D._sets == {"s": x}
+        R = D(3)
         assert R == {"s": 1}
         # repr is hard - need to repr sets first :/
         #D = eval(repr(d))
         #assert d == D
         
-class Test_Set(TestCase):
-    @skip("repr is complicated")
-    def test_repr_unassigned(self):
-        s1 = Set(fun.noop())
-        s2 = eval(repr(s1))
-        assert s1 == s2
-    
+class Test_Set(TestCase):  
     @given(st.floats(allow_nan=False, allow_infinity=False),
            st.floats(allow_nan=False, allow_infinity=False),
           st.floats(min_value=0.0001, max_value=1))
@@ -340,9 +338,9 @@ class Test_Set(TestCase):
         """
         assume(low < high)
         # to avoid MemoryError and runs that take forever..
-        assume(high - low <= 100)
+        assume(high - low <= 10)
         D1 = Domain("1", low, high, res=res)
-        D1.s1 = Set(fun.bounded_linear(low, high))
+        D1.s1 = fun.bounded_linear(low, high)
         D2 = Domain("2", low, high, res=res)
         D2.s2 = Set(fun.bounded_linear(low, high))
         assert(D1.s1 == D2.s2)
@@ -350,18 +348,16 @@ class Test_Set(TestCase):
     def test_normalized(self):
         D = Domain("d", 0, 10, res=0.1)
         D.s = Set(fun.bounded_linear(3, 12))
-        x = D.s.normalized()
-        y = x.normalized()
-        
-        assert (set(D._sets.keys()) == set(["s", "normalized_s", "normalized_normalized_s"]))
-        assert x == y
+        D.x = D.s.normalized()
+        D.y = D.x.normalized()
+        assert D.x == D.y
         
     def test_sub_super_set(self):
         D = Domain("d", 0, 10, res=0.1)
         D.s = Set(fun.bounded_linear(3, 12))
-        x = D.s.normalized()
-        assert (x >= D.s)
-        assert (D.s <= x)
+        D.x = D.s.normalized()
+        assert (D.x >= D.s)
+        assert (D.s <= D.x)
         
     def test_complement(self):
         D = Domain("d", 0, 10, res=0.1)
@@ -376,6 +372,7 @@ class Test_Rules(TestCase):
            st.floats(allow_infinity=False, allow_nan=False),
            st.floats(min_value=0, max_value=1),
            st.floats(min_value=0, max_value=1))
+    @settings(suppress_health_check=[HealthCheck.filter_too_much])
     def test_rescale(self, x, out_min, out_max, in_min, in_max):
         assume(in_min < in_max)
         assume(in_min <= x <= in_max)

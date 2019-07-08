@@ -16,7 +16,6 @@ from .combinators import MAX, MIN, product, bounded_sum, simple_disjoint_sum
 
 class FuzzyWarning(UserWarning):
     """Extra Exception so that user code can filter exceptions specific to this lib."""
-    
     pass
 
 
@@ -47,7 +46,7 @@ class Domain:
 
     You MUST NOT add arbitrary attributes to an *instance* of Domain - you can
     however subclass or modify the class itself. If you REALLY have to add attributes, 
-    make sure to "whitelist" it in _allowed_attrs first. 
+    make sure to "whitelist" it in __slots__ first. 
 
     Use the Domain by calling it with the value in question. This returns a
     dictionary with the degrees of membership per set. You MAY override __call__
@@ -57,46 +56,44 @@ class Domain:
     True
     """
     
-    _allowed_attrs = ['name', 'low', 'high', 'res', '_sets']
+    __slots__ = ['_name', '_low', '_high', '_res', '_sets']
 
     def __init__(self, name, low, high, *, res=1, sets:dict=None):
         """Define a domain."""
         assert low < high, "higher bound must be greater than lower."
         assert res > 0, "resolution can't be negative or zero"
-        self.name = name
-        self.high = high
-        self.low = low
-        self.res = res
-        # one should not access (especially add things) directly
-        self._sets = {} if sets is None else sets
+        self._name = name
+        self._high = high
+        self._low = low
+        self._res = res
+        self._sets = {} if sets is None else sets  # Name: Set(Function())
 
     
     def __call__(self, x):
         """Pass a value to all sets of the domain and return a dict with results."""
-        if not(self.low <= x <= self.high):
+        if not(self._low <= x <= self._high):
             warn(f"{x} is outside of domain!")
-        memberships = {name: s.func(x) for 
-                        name, s, in self._sets.items()}
+        memberships = {name: s.func(x) for name, s in self._sets.items()}
         return memberships
 
     def __str__(self):
         """Return a string to print()."""
-        return self.name
+        return self._name
     
     def __repr__(self):
         """Return a string so that eval(repr(Domain)) == Domain."""
-        return f"Domain('{self.name}', {self.low}, {self.high}, res={self.res}, sets={self._sets})"
+        return f"Domain('{self._name}', {self._low}, {self._high}, res={self._res}, sets={self._sets})"
     
     def __eq__(self, other):
         """Test equality of two domains."""
-        return all([self.name == other.name,
-                   self.low == other.low,
-                   self.high == other.high,
-                   self.res == other.res,
+        return all([self._name == other._name,
+                   self._low == other._low,
+                   self._high == other._high,
+                   self._res == other._res,
                    self._sets == other._sets])
-
+    
     def __getattr__(self, name):
-        """Get the value of an attribute."""
+        """Get the value of an attribute. Is called after __getattribute__ is called with an AttributeError."""
         if name in self._sets:
             return self._sets[name]
         else:
@@ -104,13 +101,16 @@ class Domain:
             
     def __setattr__(self, name, value):
         """Define a set within a domain or assign a value to a domain attribute."""
-        # it's a domain attr
-        if name in self._allowed_attrs:
+        # It's a domain attr
+        if name in self.__slots__:
             object.__setattr__(self, name, value)
-        # we've got a fuzzyset
+        # We've got a fuzzyset
         else:
+            assert str.isidentifier(name), f"{name} must be an identifier."
             if not isinstance(value, Set):
-                raise ValueError(f"({name}) {value} must be a Set")
+                # Often useful to just assign a function for simple sets..
+                value = Set(value)
+            # However, we need the abstraction if we want to use Superfuzzysets (derived sets).
             self._sets[name] = value
             value.domain = self
             value.name = name
@@ -127,8 +127,10 @@ class Domain:
         
         This is used to conveniently iterate over all possible values
         for plotting etc.
+        
+        High upper bound is INCLUDED unlike range.
         """
-        return arange(self.low, self.high, self.res)
+        return arange(self._low, self._high + self._res, self._res)
             
     def min(self, x):
         """Standard way to get the min over all membership funcs.
@@ -158,62 +160,32 @@ class Set:
     
     Note that most checks are merely assertions that can be optimized away.
     DO NOT RELY on these checks and use tests to make sure that only valid calls are made.
+    
+    This class uses the classical MIN/MAX operators for AND/OR. To use different operators, simply subclass and 
+    replace the __and__ and __or__ functions. However, be careful not to mix the classes logically, 
+    since it might be confusing which operator will be used (left/right binding).
+    
     """
+    name = None  # these are set on assignment to the domain! DO NOT MODIFY
+    domain = None
     
-    _domain = None
-    _name = None
     
-    def __init__(self, func:callable, *, domain=None, name=None):
+    def __init__(self, func:callable, *, name=None, domain=None):
         """Initialize the set."""
         assert callable(func) or isinstance(func, str)
         # if func is a str, we've got a pickled function via repr
-        
         if isinstance(func, str):
             try: 
                 func = pickle.loads(func)
             except:
                 FuzzyWarning("Can't load pickled function %s" % func)
         self.func = func
-        # either both must be given or none
-        assert (domain is None) == (name is None)
-        self.domain = domain
-        if domain is not None:
-            self.domain._sets[name] = self
-        self.name = name
         
-    def name_():
-        """Name of the fuzzy set.
+        if name is not None and domain is not None:
+            setattr(domain, name, self)
         
-        Tricky because it's coupled to the domain assignment.
-        """
-        def fget(self):
-            return self._name
-        def fset(self, value):
-            if self._name is None:
-                self._name = value 
-            else:
-                raise FuzzyWarning("Can't change name once assigned.")
-        return locals()
-    name = property(**name_())
-    del name_
-    
-    def domain_():
-        """Domain of the fuzzy set.
-        
-        Tricky because it's coupled to the domain assignment.
-        """
-        def fget(self):
-            return self._domain
-        def fset(self, value):
-            if self._domain is None:
-                self._domain = value 
-            else:
-                # maybe could be solved by copy()
-                # but it's probably easier to just delete and make new
-                raise FuzzyWarning("Can't change domain once assigned.")
-        return locals()
-    domain = property(**domain_())
-    del domain_
+        if bool(name)^bool(domain):
+            raise FuzzyWarning("Name or domain is provided, but not both!")
 
     def __call__(self, x):
         """Call the function of the set (which can be of any arbitrary complexity)."""
@@ -222,7 +194,10 @@ class Set:
     def __invert__(self):
         """Return a new set with modified function."""
         return Set(inv(self.func))
-
+    
+    def __neg__(self):
+        return Set(inv(self.func))
+    
     def __and__(self, other):
         """Return a new set with modified function."""
         return Set(MIN(self.func, other.func))
@@ -310,44 +285,33 @@ class Set:
         """
         Alternative to hedge "very".
         
-        Returns an new array that has a reduced amount of values the set includes and to dampen the
+        Returns an new set that has a reduced amount of values the set includes and to dampen the
         membership of many values.
-        TODO: implement this as a new set?
         """
-        return NotImplemented
-        
-        return self.array ** 2
+        return Set(lambda x: self.func(x) ** 2)
 
     def intensified(self):
         """
         Alternative to using hedges.
         
-        Returns a new array where the membership of values are increased that 
+        Returns a new set where the membership of values are increased that 
         already strongly belong to the set and dampened the rest.
-        
-        TODO: implement this as a new set?
         """
-        return NotImplemented
-        if x < 0.5:
-            return 2 * x**2
-        else:
-            return 1 - 2(1 - x**2)
+        def f(x):
+            if x < 0.5:
+                return 2 * self.func(x)**2
+            else:
+                return 1 - 2(1 - self.func(x)**2)
+        return Set(f)
         
     def dilated(self):
         """Expand the set with more values and already included values are enhanced.
-        
-        TODO: implement this as a new set?
         """
-        return NotImplemented
-        return x ** 1./2.
+        return Set(lambda x: self.func(x) ** 1./2.)
 
     def multiplied(self, n):
-        """Multiply with a constant factor, changing all membership values.
-        
-        TODO: implement this as a new set?
-        """
-        return NotImplemented
-        return x * n
+        """Multiply with a constant factor, changing all membership values."""
+        return Set(lambda x: self.func(x) * n)
         
     def plot(self):
         """Graph the set in the given domain."""
@@ -361,8 +325,7 @@ class Set:
         """Return an array of all values for this set within the given domain."""
         if self.domain is None:
             raise FuzzyWarning("No domain assigned.")
-        return fromiter((self.func(x) for x in self.domain.range()),
-                        float)
+        return fromiter((self.func(x) for x in self.domain.range()), float)
 
     def __repr__(self):
         """
@@ -384,23 +347,20 @@ class Set:
             func = types.FunctionType(*args[:-1] + [closure])
             return func
         """
-        return f"Set({self.func}, domain={self.domain}, name={self.name})"
+        return f"Set({self.func})"
     
     def __str__(self):
         """Return a string for print()."""
         if self.name is None and self.domain is None:
             return f"dangling Set({self.func})"
         else:
-            return f"{self.domain}.{self.name}"
+            return f"{self.domain._name}.{self.name}"
         
     def normalized(self):
-        """Return a set *in this domain* whose max value is 1."""
+        """Return a set that is normalized *for this domain* with 1 as max."""
         if self.domain is None:
             raise FuzzyWarning("Can't normalize without domain.")
-        else:
-            return Set(normalize(max(self.array()), self.func), 
-                            domain=self.domain,
-                            name=f"normalized_{self.name}")
+        return Set(normalize(max(self.array()), self.func))
 
 if __name__ == "__main__":
     import doctest

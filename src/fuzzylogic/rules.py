@@ -58,7 +58,7 @@ def rescale(out_min, out_max, *, in_min=0, in_max=1):
     return f
 
 
-def weighted_sum(*, weights:dict, target:Domain) -> float:
+def weighted_sum(*, weights:dict, target_d:Domain) -> float:
     """Used for weighted decision trees and such.
     
     Parametrize with dict of factorname -> weight and domain of results.
@@ -71,9 +71,9 @@ def weighted_sum(*, weights:dict, target:Domain) -> float:
     """
     assert sum(w for w in weights.values()) == 1
 
-    rsc = rescale(target.low, target.high)
+    rsc = rescale(target_d._low, target_d._high)
     
     def f(memberships):
         result = sum(r * weights[n] for n, r in memberships.items())
-        return round_partial(rsc(result), target.res)
+        return round_partial(rsc(result), target_d._res)
     return f

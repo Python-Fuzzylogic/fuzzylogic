@@ -1,21 +1,24 @@
+
+import os, sys
+here = (os.path.abspath(os.path.dirname(__file__)))
+src = os.path.join(here, "src")
+sys.path.append(src)
+
+from stay import load
 from setuptools import setup, find_packages
 
+with open("META.stay") as f:
+    for meta in load(f):
+        pass
+
+with open("README.md") as f:
+    LONG_DESCRIPTION = f.read()
+  
 setup(
-    name='research_project',
-    version='0.1.0',
-    description='CHANGETHIS research project as Python module structure',
-    long_description="<add a longer description>",
-    author='Written by Ian Ozsvald',
-    author_email='ian@ianozsvald.com',
-    url='CHANGETHIS http:///',
-    license='',
-    packages=find_packages(),
-    include_package_data=True,
+    packages=find_packages(where="src"),
+    package_dir={"": "src"},
+    long_description=LONG_DESCRIPTION,
+    long_description_content_type="text/markdown",
     zip_safe=False,
-    install_requires=[],  #["numpy>=1.10"], # we use Anaconda instead of pip
-    classifiers=[
-        'Environment :: Console',
-        'Intended Audience :: Developers',
-        'Operating System :: OS Independent',
-        'Programming Language :: Python']
+    **meta
 )

@@ -228,17 +228,16 @@ def R(low, high):
     THIS FUNCTION ONLY CAN HAVE A POSITIVE SLOPE -
     USE THE S() FUNCTION FOR NEGATIVE SLOPE.
     """
-    assert low < high, f"{low}, {high}"
+    assert low < high, f"{low} >? {high}"
 
     def f(x):
-        if x < low:
+        if x < low or isinf(high - low):
             return 0
         if low <= x <= high:
             return (x - low) / (high - low)
         if x > high:
             return 1
     return f
-
 
 def S(low, high):
     """Simple alternative for bounded_linear.
