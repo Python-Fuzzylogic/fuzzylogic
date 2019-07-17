@@ -1,1 +1,4 @@
-{}
+{
+  "test/test_functionality.py": true,
+  "test/test_units.py": true
+}

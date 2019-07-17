@@ -2,8 +2,11 @@
 .git
 .cache/*
 __pycache__
+.pytest_cache/*
 .ipynb_checkpoints/
 .pytest_cache
+dist/*
 DEV*
 TODO-fuzzy
 box
+

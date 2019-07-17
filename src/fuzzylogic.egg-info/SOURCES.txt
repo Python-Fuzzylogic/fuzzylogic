@@ -1,12 +1,5 @@
 README.md
 setup.py
-src/fuzzylogic/__init__.py
-src/fuzzylogic/classes.py
-src/fuzzylogic/combinators.py
-src/fuzzylogic/functions.py
-src/fuzzylogic/hedges.py
-src/fuzzylogic/rules.py
-src/fuzzylogic/truth.py
 src/fuzzylogic.egg-info/PKG-INFO
 src/fuzzylogic.egg-info/SOURCES.txt
 src/fuzzylogic.egg-info/dependency_links.txt

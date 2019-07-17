@@ -3,12 +3,18 @@
 Functional test of the fuzzylogic lib 'fuzzy'.
 """
 
+import os, sys
+here = os.path.split(os.path.abspath(os.path.dirname(__file__)))
+src = os.path.join(here[0], "src/fuzzylogic")
+sys.path.insert(0,src)
+print(sys.path)
+
 from pytest import fixture, raises
 from numpy import array_equal
 
-from fuzzy.classes import Domain, Set
-from fuzzy.rules import rescale, weighted_sum
-from fuzzy.functions import R, S, bounded_linear
+from fuzzylogic.classes import Domain, Set
+from fuzzylogic.rules import rescale, weighted_sum
+from fuzzylogic.functions import R, S, bounded_linear
 
 @fixture
 def temp():

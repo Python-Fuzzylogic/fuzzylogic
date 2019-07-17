@@ -427,6 +427,20 @@ def bounded_sigmoid(low, high, inverse=False):
         return 1 / (1 + 9 * r)
     return f
 
+def bounded_exponential(k=0.1, limit=1):
+    """Function that goes through the origin and approaches a limit.
+    k determines the steepness. The function defined for [0, +inf).
+    Useful for things that can't be below 0 but may not have a limit like temperature
+    or time, so values are always defined.
+    f(x)=limit-limit/e^(k*x)
+
+    Again: This function assumes x >= 0, there are no checks for this assumption!
+    """
+    assert limit > 0
+    assert k > 0
+    def f(x):
+        return limit - limit/exp(k*x)
+    return f
 
 def simple_sigmoid(k=0.229756):
     """Sigmoid variant with only one parameter (steepness).

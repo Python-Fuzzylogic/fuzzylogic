@@ -1,15 +1,21 @@
 
+import os, sys
+here = os.path.split(os.path.abspath(os.path.dirname(__file__)))
+src = os.path.join(here[0], "src/fuzzylogic")
+sys.path.insert(0,src)
+
 from hypothesis import given, strategies as st, assume, settings, HealthCheck
 from math import isclose
 from unittest import TestCase, skip
 import numpy as np
+print(sys.path)
 
-from fuzzy.classes import Domain, Set
-from fuzzy import functions as fun
-from fuzzy import hedges
-from fuzzy import combinators as combi
-import fuzzy.rules as ru
-from fuzzy import truth
+from fuzzylogic.classes import Domain, Set
+from fuzzylogic import functions as fun
+from fuzzylogic import hedges
+from fuzzylogic import combinators as combi
+import fuzzylogic.rules as ru
+from fuzzylogic import truth
 
 class Test_Functions(TestCase):
     @given(st.floats(allow_nan=False))
@@ -193,6 +199,16 @@ class Test_Functions(TestCase):
         assume(0 < c_m)
         f = fun.gauss(c, b, c_m=c_m)
         assert (0 <= f(x) <= 1)
+        
+    @given(st.floats(allow_nan=False, min_value=0),
+          st.floats(allow_nan=False, min_value=0),
+          st.floats(allow_nan=False, min_value=0)
+          )
+    def test_bounded_exponential(self, k, limit, x):
+        assume(k != 0)
+        assume(limit != 0)
+        f = fun.bounded_exponential(k, limit)
+        assert (0 <= f(x) <= limit)
 
 class Test_Hedges(TestCase):
     @given(st.floats(min_value=0, max_value=1))
