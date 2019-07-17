@@ -5,7 +5,7 @@ Functional test of the fuzzylogic lib 'fuzzy'.
 
 import os, sys
 here = os.path.split(os.path.abspath(os.path.dirname(__file__)))
-src = os.path.join(here[0], "src/fuzzylogic")
+src = os.path.join(here[0], "src")
 sys.path.insert(0,src)
 print(sys.path)
 

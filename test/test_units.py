@@ -1,7 +1,7 @@
 
 import os, sys
 here = os.path.split(os.path.abspath(os.path.dirname(__file__)))
-src = os.path.join(here[0], "src/fuzzylogic")
+src = os.path.join(here[0], "src")
 sys.path.insert(0,src)
 
 from hypothesis import given, strategies as st, assume, settings, HealthCheck
@@ -9,6 +9,8 @@ from math import isclose
 from unittest import TestCase, skip
 import numpy as np
 print(sys.path)
+
+version = (0,1,1,3)
 
 from fuzzylogic.classes import Domain, Set
 from fuzzylogic import functions as fun
@@ -200,8 +202,8 @@ class Test_Functions(TestCase):
         f = fun.gauss(c, b, c_m=c_m)
         assert (0 <= f(x) <= 1)
         
-    @given(st.floats(allow_nan=False, min_value=0),
-          st.floats(allow_nan=False, min_value=0),
+    @given(st.floats(allow_nan=False, min_value=0, allow_infinity=False),
+          st.floats(allow_nan=False, min_value=0, allow_infinity=False),
           st.floats(allow_nan=False, min_value=0)
           )
     def test_bounded_exponential(self, k, limit, x):

@@ -439,7 +439,10 @@ def bounded_exponential(k=0.1, limit=1):
     assert limit > 0
     assert k > 0
     def f(x):
-        return limit - limit/exp(k*x)
+        try: 
+            return limit - limit/exp(k*x)
+        except OverflowError:
+            return limit
     return f
 
 def simple_sigmoid(k=0.229756):

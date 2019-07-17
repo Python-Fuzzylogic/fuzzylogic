@@ -5,6 +5,7 @@ __pycache__
 .pytest_cache/*
 .ipynb_checkpoints/
 .pytest_cache
+build/*
 dist/*
 DEV*
 TODO-fuzzy
