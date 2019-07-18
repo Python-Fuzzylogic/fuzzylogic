@@ -151,7 +151,7 @@ class Test_Functions(TestCase):
       st.floats(allow_nan=False, allow_infinity=False),
       st.floats(min_value=0, max_value=1),
       st.floats(min_value=0, max_value=1))
-    @settings(suppress_health_check=[HealthCheck.filter_too_much])
+    @settings(suppress_health_check=[HealthCheck.filter_too_much, HealthCheck.too_slow])
     def test_trapezoid(self, x, low, c_low, c_high, high, c_m, no_m):
         assume(low < c_low <= c_high < high)
         assume(no_m < c_m)
