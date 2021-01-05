@@ -4,8 +4,10 @@ here = (os.path.abspath(os.path.dirname(__file__)))
 src = os.path.join(here, "src/fuzzylogic")
 sys.path.append(src)
 
-from stay import load
+from stay import Decoder
 from setuptools import setup, find_packages
+
+load = Decoder()
 
 with open("META.stay") as f:
     for meta in load(f):
