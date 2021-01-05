@@ -1,7 +1,7 @@
 
 import os, sys
 here = (os.path.abspath(os.path.dirname(__file__)))
-src = os.path.join(here, "src")
+src = os.path.join(here, "src/fuzzylogic")
 sys.path.append(src)
 
 from stay import load
