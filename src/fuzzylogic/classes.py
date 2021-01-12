@@ -6,13 +6,25 @@ Primary abstractions for recursive functions for better handling.
 """
 
 import matplotlib.pyplot as plt
-from numpy import arange, fromiter, array_equal, less_equal, greater_equal, less, greater
 import numpy as np
-from logging import warn
 import pickle
 
-from .functions import inv, normalize
-from .combinators import MAX, MIN, product, bounded_sum, simple_disjoint_sum
+from logging import warn
+from numpy import arange
+from numpy import array_equal
+from numpy import fromiter
+from numpy import greater
+from numpy import greater_equal
+from numpy import less
+from numpy import less_equal
+
+from .combinators import MAX
+from .combinators import MIN
+from .combinators import bounded_sum
+from .combinators import product
+from .combinators import simple_disjoint_sum
+from .functions import inv
+from .functions import normalize
 
 class FuzzyWarning(UserWarning):
     """Extra Exception so that user code can filter exceptions specific to this lib."""
@@ -193,7 +205,7 @@ class Set:
 
     def __invert__(self):
         """Return a new set with modified function."""
-        return Set(inv(self.func))
+        return Set(inv(self.func)),
     
     def __neg__(self):
         return Set(inv(self.func))
