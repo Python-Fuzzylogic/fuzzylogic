@@ -12,7 +12,7 @@ meta={
     "description":"Fuzzy Logic for Python 3",
     "license":"MIT",
     "url":"https://github.com/amogorkon/fuzzylogic",
-    "version":"0.1.2.post2",
+    "version":"0.1.2.post3",
     "author":"Anselm Kiefner",
     "author_email":"fuzzylogic-pypi@anselm.kiefner.de",
     "python_requires":">3.6",
