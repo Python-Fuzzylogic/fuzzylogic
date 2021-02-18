@@ -11,3 +11,6 @@ DEV*
 TODO-fuzzy
 box
 
+/fuzzylogic-*
+workspace.code-workspace
+src/fuzzylogic.egg*

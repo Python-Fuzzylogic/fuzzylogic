@@ -1,4 +1,4 @@
-# fuzzy - Fuzzy Logic for Python 3
+# Fuzzy Logic for Python 3
 This is the fourth time I rebuilt this library from scratch to find the sweet spot between ease of use (beautiful is better than ugly!), testability (simple is better than complex!) and potential to optimize for performance (practicality beats purity!). 
 
 ### Why a new library?
