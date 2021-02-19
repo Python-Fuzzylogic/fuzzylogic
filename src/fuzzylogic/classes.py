@@ -35,13 +35,8 @@ class Domain:
     >>> temp.hot = Set(lambda x: 0)
     >>> temp.hot(5)
     0
-
-    DO NOT call a derived set without assignment first as it WILL
-    confuse the recursion and seriously mess up.
-    NOT: ~temp.hot(2) or ~(temp.hot.)(2) 
-    BUT:
-    >>> not_hot = ~temp.hot
-    >>> not_hot(2)
+    It is possible now to call derived sets without assignment first!
+    >>> (very(~temp.hot) | ~very(temp.hot))(2)
     1
 
     You MUST NOT add arbitrary attributes to an *instance* of Domain - you can
