@@ -5,7 +5,8 @@ Lingual hedges modify curves of membership values.
 These should work with Sets and functions.
 """
 
-from .classes import Set
+from classes import Set
+
 
 def very(g):
     """Sharpen memberships so that only the values close 1 stay at the top."""
@@ -14,7 +15,7 @@ def very(g):
             def f(x):
                 return g(x) ** 2
             return f
-        return Set(s_f(g.func))
+        return Set(s_f(g.func), domain=g.domain, name=f"very_{g.name}")
     else:
         def f(x):
             return g(x) ** 2
@@ -28,7 +29,7 @@ def plus(g):
             def f(x):
                 return g(x) ** 1.25
             return f
-        return Set(s_f(g.func))
+        return Set(s_f(g.func), domain=g.domain, name=f"plus_{g.name}")
     else:
         def f(x):
             return g(x) ** 1.25
@@ -42,7 +43,7 @@ def minus(g):
             def f(x):
                 return g(x) ** 0.75
             return f 
-        return Set(s_f(g.func))
+        return Set(s_f(g.func), domain=g.domain, name=f"minus_{g.name}")
     else:
         def f(x):
             return g(x) ** 0.75

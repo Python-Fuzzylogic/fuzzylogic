@@ -28,7 +28,7 @@ In a fuzzy set with one and only one m == 1, this element is called 'prototype'.
 """
 
 
-from math import exp, log, sqrt, isinf, isnan
+from math import exp, isinf, isnan, log
 
 #####################
 # SPECIAL FUNCTIONS #
@@ -61,7 +61,7 @@ def constant(c):
     >>> f(0)
     1
     """
-    def f(x):
+    def f(_):
         return c
     return f
 
@@ -194,7 +194,7 @@ def bounded_linear(low, high, *, c_m=1, no_m=0, inverse=False):
     
     # special cases found by hypothesis
     
-    def g_0(x):
+    def g_0(_):
         return (c_m + no_m) / 2
     
     if gradient == 0:
@@ -233,9 +233,9 @@ def R(low, high):
     def f(x):
         if x < low or isinf(high - low):
             return 0
-        if low <= x <= high:
+        elif low <= x <= high:
             return (x - low) / (high - low)
-        if x > high:
+        else:
             return 1
     return f
 
@@ -250,10 +250,10 @@ def S(low, high):
     def f(x):
         if x <= low:
             return 1
-        if low < x < high:
+        elif low < x < high:
             # factorized to avoid nan
             return high / (high - low) - x / (high - low) 
-        if high <= x:
+        else:
             return 0
     return f
 
@@ -268,12 +268,10 @@ def rectangular(low:float, high:float, *, c_m:float=1, no_m:float=0) -> callable
     assert low < high, f'{low}, {high}'
 
     def f(x:float) -> float:
-        if x < low:
+        if x < low or high < x:
             return no_m
-        if low <= x <= high:
+        else:
             return c_m
-        if high < x:
-            return no_m
 
     return f
 
@@ -344,7 +342,7 @@ def sigmoid(L, k, x0):
     def f(x):
         if isnan(k*x):
             # e^(0*inf) = 1
-            o = 1
+            o = 1.
         else:
             try:
                 o = exp(-k*(x - x0))
@@ -402,10 +400,10 @@ def bounded_sigmoid(low, high, inverse=False):
     try:
         # if high - low underflows to 0..
         if isinf(k):
-            p = 0
+            p = 0.
         # just in case k -> 0 and low -> inf
         elif isnan(-k * low):
-            p = 1
+            p = 1.
         else:
             p = exp(-k * low)
     except OverflowError:
@@ -415,7 +413,7 @@ def bounded_sigmoid(low, high, inverse=False):
         try:
             # e^(0*inf) = 1 for both -inf and +inf
             if (isinf(k) and x == 0) or (k == 0 and isinf(x)):
-                q = 1
+                q = 1.
             else: q = exp(x * k)
         except OverflowError:
             q = float("inf")

@@ -14,10 +14,10 @@ there is always only one secondary argument - the value to be evaluated.
 """
 
 from functools import reduce
+
 from numpy import multiply
 
-from .functions import noop
-
+from functions import noop
 
 
 def MIN(*funcs):

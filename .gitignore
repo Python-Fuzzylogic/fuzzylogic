@@ -14,3 +14,4 @@ box
 /fuzzylogic-*
 workspace.code-workspace
 src/fuzzylogic.egg*
+src/fuzzylogic/.test.py

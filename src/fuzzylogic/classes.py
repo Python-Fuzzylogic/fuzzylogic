@@ -5,26 +5,14 @@ Domain and Set classes for fuzzy logic.
 Primary abstractions for recursive functions for better handling.
 """
 
+from logging import warn
+
 import matplotlib.pyplot as plt
 import numpy as np
-import pickle
 
-from logging import warn
-from numpy import arange
-from numpy import array_equal
-from numpy import fromiter
-from numpy import greater
-from numpy import greater_equal
-from numpy import less
-from numpy import less_equal
+from combinators import MAX, MIN, bounded_sum, product, simple_disjoint_sum
+from functions import inv, normalize
 
-from .combinators import MAX
-from .combinators import MIN
-from .combinators import bounded_sum
-from .combinators import product
-from .combinators import simple_disjoint_sum
-from .functions import inv
-from .functions import normalize
 
 class FuzzyWarning(UserWarning):
     """Extra Exception so that user code can filter exceptions specific to this lib."""
@@ -81,12 +69,19 @@ class Domain:
         self._sets = {} if sets is None else sets  # Name: Set(Function())
 
     
-    def __call__(self, x):
+    def __call__(self, X):
         """Pass a value to all sets of the domain and return a dict with results."""
-        if not(self._low <= x <= self._high):
-            warn(f"{x} is outside of domain!")
-        memberships = {name: s.func(x) for name, s in self._sets.items()}
-        return memberships
+        if isinstance(X, np.ndarray):
+            if any(not(self._low <= x <= self._high) for x in X):
+                raise FuzzyWarning(f"Value in array is outside of defined range!")
+            res = {}
+            for s in self._sets.values():
+                vector = np.vectorize(s.func, otypes=[float])
+                res[s] = vector(X)
+            return  res
+        if not(self._low <= X <= self._high):
+            warn(f"{X} is outside of domain!")
+        return {s: s.func(X) for name, s in self._sets.items()}
 
     def __str__(self):
         """Return a string to print()."""
@@ -99,10 +94,13 @@ class Domain:
     def __eq__(self, other):
         """Test equality of two domains."""
         return all([self._name == other._name,
-                   self._low == other._low,
-                   self._high == other._high,
-                   self._res == other._res,
-                   self._sets == other._sets])
+                    self._low == other._low,
+                    self._high == other._high,
+                    self._res == other._res,
+                    self._sets == other._sets])
+    
+    def __hash__(self):
+        return hash((self._name, self._low, self._high, self._res, self._sets))
     
     def __getattr__(self, name):
         """Get the value of an attribute. Is called after __getattribute__ is called with an AttributeError."""
@@ -134,6 +132,7 @@ class Domain:
         else:
             raise FuzzyWarning("Trying to delete a regular attr, this needs extra care.")
 
+    @property
     def range(self):
         """Return an arange object with the domain's specifics.
         
@@ -142,7 +141,7 @@ class Domain:
         
         High upper bound is INCLUDED unlike range.
         """
-        return arange(self._low, self._high + self._res, self._res)
+        return np.arange(self._low, self._high + self._res, self._res)
             
     def min(self, x):
         """Standard way to get the min over all membership funcs.
@@ -156,7 +155,6 @@ class Domain:
     def max(self, x):
         """Standard way to get the max over all membership funcs."""
         return max(f(x) for f in self._sets.values())
-            
 class Set:
     """
     A fuzzyset defines a 'region' within a domain.
@@ -181,59 +179,52 @@ class Set:
     name = None  # these are set on assignment to the domain! DO NOT MODIFY
     domain = None
     
-    
     def __init__(self, func:callable, *, name=None, domain=None):
-        """Initialize the set."""
-        assert callable(func) or isinstance(func, str)
-        # if func is a str, we've got a pickled function via repr
-        if isinstance(func, str):
-            try: 
-                func = pickle.loads(func)
-            except:
-                FuzzyWarning("Can't load pickled function %s" % func)
         self.func = func
-        
-        if name is not None and domain is not None:
-            setattr(domain, name, self)
-        
-        if bool(name)^bool(domain):
-            raise FuzzyWarning("Name or domain is provided, but not both!")
+        self.domain = domain
+        self.name = name
+        self.__center_of_gravity = None
 
     def __call__(self, x):
-        """Call the function of the set (which can be of any arbitrary complexity)."""
         return self.func(x)
 
     def __invert__(self):
-        """Return a new set with modified function."""
-        return Set(inv(self.func)),
+        """Return a new set with 1 - function."""
+        return Set(inv(self.func), domain=self.domain)
     
     def __neg__(self):
-        return Set(inv(self.func))
+        """Synonyme for invert."""
+        return Set(inv(self.func), domain=self.domain)
     
     def __and__(self, other):
         """Return a new set with modified function."""
-        return Set(MIN(self.func, other.func))
+        assert self.domain == other.domain
+        return Set(MIN(self.func, other.func), domain=self.domain)
 
     def __or__(self, other):
         """Return a new set with modified function."""
-        return Set(MAX(self.func, other.func))
+        assert self.domain == other.domain
+        return Set(MAX(self.func, other.func), domain=self.domain)
 
     def __mul__(self, other):
         """Return a new set with modified function."""
-        return Set(product(self.func, other.func))
+        assert self.domain == other.domain
+        return Set(product(self.func, other.func), domain=self.domain)
 
     def __add__(self, other):
         """Return a new set with modified function."""
-        return Set(bounded_sum(self.func, other.func))
+        assert self.domain == other.domain
+        return Set(bounded_sum(self.func, other.func), domain=self.domain)
     
     def __xor__(self, other):
         """Return a new set with modified function."""
-        return Set(simple_disjoint_sum(self.func, other.func))
+        assert self.domain == other.domain
+        return Set(simple_disjoint_sum(self.func, other.func), domain=self.domain)
 
     def __pow__(self, power):
         """Return a new set with modified function."""
         #FYI: pow is used with hedges
-        return Set(lambda x: pow(self.func(x), power))
+        return Set(lambda x: pow(self.func(x), power), domain=self.domain)
     
     def __eq__(self, other):
         """A set is equal with another if both return the same values over the same range."""
@@ -246,31 +237,35 @@ class Set:
         else:
             # however, if domains ARE assigned (whether or not it's the same domain), 
             # we simply can check if they map to the same values 
-            return array_equal(self.array(), other.array())
+            return np.array_equal(self.array(), other.array())
         
     def __le__(self, other):
         """If this <= other, it means this is a subset of the other."""
+        assert self.domain == other.domain
         if self.domain is None or other.domain is None:
             raise FuzzyWarning("Can't compare without Domains.")
-        return all(less_equal(self.array(), other.array()))
+        return all(np.less_equal(self.array(), other.array()))
     
     def __lt__(self, other):
         """If this < other, it means this is a proper subset of the other."""
+        assert self.domain == other.domain
         if self.domain is None or other.domain is None:
             raise FuzzyWarning("Can't compare without Domains.")
-        return all(less(self.array(), other.array()))
+        return all(np.less(self.array(), other.array()))
     
     def __ge__(self, other):
         """If this >= other, it means this is a superset of the other."""
+        assert self.domain == other.domain
         if self.domain is None or other.domain is None:
             raise FuzzyWarning("Can't compare without Domains.")
-        return all(greater_equal(self.array(), other.array()))
+        return all(np.greater_equal(self.array(), other.array()))
 
     def __gt__(self, other):
         """If this > other, it means this is a proper superset of the other."""
+        assert self.domain == other.domain
         if self.domain is None or other.domain is None:
             raise FuzzyWarning("Can't compare without Domains.")
-        return all(greater(self.array(), other.array()))
+        return all(np.greater(self.array(), other.array()))
     
     def __len__(self):
         """Number of membership values in the set, defined by bounds and resolution of domain."""
@@ -278,12 +273,14 @@ class Set:
             raise FuzzyWarning("No domain.")
         return len(self.array())
     
+    @property
     def cardinality(self):
         """The sum of all values in the set."""
         if self.domain is None:
             raise FuzzyWarning("No domain.")
         return sum(self.array())
 
+    @property
     def relative_cardinality(self):
         """Relative cardinality is the sum of all membership values by number of all values."""
         if self.domain is None:
@@ -297,14 +294,14 @@ class Set:
         """
         Alternative to hedge "very".
         
-        Returns an new set that has a reduced amount of values the set includes and to dampen the
+        Returns a new set that has a reduced amount of values the set includes and to dampen the
         membership of many values.
         """
-        return Set(lambda x: self.func(x) ** 2)
+        return Set(lambda x: self.func(x) ** 2, domain=self.domain)
 
     def intensified(self):
         """
-        Alternative to using hedges.
+        Alternative to hedges.
         
         Returns a new set where the membership of values are increased that 
         already strongly belong to the set and dampened the rest.
@@ -313,23 +310,23 @@ class Set:
             if x < 0.5:
                 return 2 * self.func(x)**2
             else:
-                return 1 - 2(1 - self.func(x)**2)
-        return Set(f)
+                return 1 - 2 * (1 - self.func(x)**2)
+        return Set(f, domain=self.domain)
         
     def dilated(self):
         """Expand the set with more values and already included values are enhanced.
         """
-        return Set(lambda x: self.func(x) ** 1./2.)
+        return Set(lambda x: self.func(x) ** 1./2., domain=self.domain)
 
     def multiplied(self, n):
         """Multiply with a constant factor, changing all membership values."""
-        return Set(lambda x: self.func(x) * n)
+        return Set(lambda x: self.func(x) * n, domain=self)
         
     def plot(self):
         """Graph the set in the given domain."""
         if self.domain is None:
             raise FuzzyWarning("No domain assigned, cannot plot.")
-        R = self.domain.range()
+        R = self.domain.range
         V = [self.func(x) for x in R]
         plt.plot(R, V)
     
@@ -337,7 +334,18 @@ class Set:
         """Return an array of all values for this set within the given domain."""
         if self.domain is None:
             raise FuzzyWarning("No domain assigned.")
-        return fromiter((self.func(x) for x in self.domain.range()), float)
+        return np.fromiter((self.func(x) for x in self.domain.range), float)
+
+    @property
+    def center_of_gravity(self):
+        """Return the center of gravity for this distribution, within the given domain."""
+        if self.__center_of_gravity is not None:
+            return self.__center_of_gravity
+
+        A = self.array()
+        cog = np.average(np.arange(len(A)), weights= A)
+        self.__center_of_gravity = cog
+        return cog
 
     def __repr__(self):
         """
@@ -372,7 +380,52 @@ class Set:
         """Return a set that is normalized *for this domain* with 1 as max."""
         if self.domain is None:
             raise FuzzyWarning("Can't normalize without domain.")
-        return Set(normalize(max(self.array()), self.func))
+        return Set(normalize(max(self.array()), self.func), domain=self.domain)
+    
+    def __hash__(self):
+        return id(self)
+
+class Rule:
+    """
+    A collection of bound sets that span a multi-dimensional space of their respective domains.
+    """
+    def __init__(self, conditions, func=None):
+        self.conditions = {frozenset(C): O for C, O, in conditions.items()}
+        self.func = func
+
+    def __add__(self, other):
+        assert isinstance(other, Rule)
+        return Rule({**self.conditions, **other.conditions})
+    
+    def __radd__(self, other):
+        assert isinstance(other, (Rule, int))
+        # we're using sum(..)
+        if isinstance(other, int):
+            return self
+        return Rule({**self.conditions, **other.conditions})
+    
+    def __or__(self, other):
+        assert isinstance(other, Rule)
+        return Rule({**self.conditions,  **other.conditions})
+    
+    def __eq__(self, other):
+        return self.conditions == other.conditions
+    
+    def __getitem__(self, key):
+        return self.conditions[frozenset(key)]
+    
+    def __call__(self, *args: "list[dict]", method="cog"):
+        """Calculate the infered value based on different methods.
+        Default is center of gravity.
+        """
+        assert len(args) == max(len(c) for c in self.conditions.keys()), "Number of arguments must correspond to the number of domains!"
+        if method == "cog":
+            actual_values = {k: v for D in args for k, v in D.items()}
+            weights = [(v, x) for K, v in self.conditions.items()
+                        if (x := min(actual_values[k] for k in K if k in actual_values)) > 0]
+            if not weights:
+                return None
+            return sum(v.center_of_gravity * x for v, x in weights) / sum(x for v, x in weights)
 
 if __name__ == "__main__":
     import doctest
