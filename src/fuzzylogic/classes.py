@@ -100,7 +100,7 @@ class Domain:
                     self._sets == other._sets])
     
     def __hash__(self):
-        return hash((self._name, self._low, self._high, self._res, self._sets))
+        return id(self)
     
     def __getattr__(self, name):
         """Get the value of an attribute. Is called after __getattribute__ is called with an AttributeError."""
@@ -414,13 +414,13 @@ class Rule:
     def __getitem__(self, key):
         return self.conditions[frozenset(key)]
     
-    def __call__(self, *args: "list[dict]", method="cog"):
+    def __call__(self, args:"dict[Domain]", method="cog"):
         """Calculate the infered value based on different methods.
         Default is center of gravity.
         """
         assert len(args) == max(len(c) for c in self.conditions.keys()), "Number of arguments must correspond to the number of domains!"
         if method == "cog":
-            actual_values = {k: v for D in args for k, v in D.items()}
+            actual_values = {f: f(args[f.domain]) for S in self.conditions.keys() for f in S}
             weights = [(v, x) for K, v in self.conditions.items()
                         if (x := min(actual_values[k] for k in K if k in actual_values)) > 0]
             if not weights:
