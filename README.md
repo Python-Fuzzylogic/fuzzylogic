@@ -17,4 +17,8 @@ To make it possible to write fuzzy logic in the most pythonic and simplest way i
 * Domain and Set uses an assignment trick to make it possible to instantiate Set() without passing domain and name over and over (yet still be explicit, just not the way one would normally expect). This also allows to call sets as Domain.attributes, which also normally shouldn't be possible (since they are technically not attributes). However, this allows interesting things like dangling sets (sets without domains) that can be freely combined with other sets to avoid cluttering of domain-namespaces and just have the resulting set assigned to a domain to work with.
 Check the Showcase notebook in docs on https://github.com/amogorkon/fuzzylogic for working examples and documentation.
 Have fun!
-- Anselm Kiefner
+
+# Office Hours
+You can contact me one-on-one! Please follow https://calendly.com/amogorkon/officehours to set up a meeting :-)
+
+-- Anselm Kiefner
