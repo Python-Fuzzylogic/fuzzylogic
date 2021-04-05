@@ -5,7 +5,7 @@ Lingual hedges modify curves of membership values.
 These should work with Sets and functions.
 """
 
-from classes import Set
+from .classes import Set
 
 
 def very(g):

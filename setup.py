@@ -1,20 +1,19 @@
 
-import os, sys
+import os
+import sys
+
 here = (os.path.abspath(os.path.dirname(__file__)))
 src = os.path.join(here, "src/fuzzylogic")
 sys.path.append(src)
 
-from setuptools import find_packages
-from setuptools import setup
-
-
+from setuptools import find_packages, setup
 
 meta={
     "name":"fuzzylogic",
     "description":"Fuzzy Logic for Python 3",
     "license":"MIT",
     "url":"https://github.com/amogorkon/fuzzylogic",
-    "version":"0.1.2.post4",
+    "version":"1.0.0",
     "author":"Anselm Kiefner",
     "author_email":"fuzzylogic-pypi@anselm.kiefner.de",
     "python_requires":">3.6",

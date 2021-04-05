@@ -10,8 +10,8 @@ from logging import warn
 import matplotlib.pyplot as plt
 import numpy as np
 
-from combinators import MAX, MIN, bounded_sum, product, simple_disjoint_sum
-from functions import inv, normalize
+from .combinators import MAX, MIN, bounded_sum, product, simple_disjoint_sum
+from .functions import inv, normalize
 
 
 class FuzzyWarning(UserWarning):
