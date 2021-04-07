@@ -409,11 +409,12 @@ class Rule:
     def __getitem__(self, key):
         return self.conditions[frozenset(key)]
     
-    def __call__(self, args:"dict[Domain]", method="cog"):
+    def __call__(self, args:"dict[Domain, float]", method="cog"):
         """Calculate the infered value based on different methods.
         Default is center of gravity.
         """
-        assert len(args) == max(len(c) for c in self.conditions.keys()), "Number of arguments must correspond to the number of domains!"
+        assert len(args) == max(len(c) for c in self.conditions.keys()), "Number of values must correspond to the number of domains defined as conditions!"
+        assert isinstance(args, dict), "Please make sure to pass in the values as a dictionary."
         if method == "cog":
             actual_values = {f: f(args[f.domain]) for S in self.conditions.keys() for f in S}
             weights = [(v, x) for K, v in self.conditions.items()
