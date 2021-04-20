@@ -1,8 +1,9 @@
 
 """
-Domain and Set classes for fuzzy logic.
+Domain, Set and Rule classes for fuzzy logic.
 
-Primary abstractions for recursive functions for better handling.
+Primary abstractions for recursive functions and arrays, 
+adding logical operaitons for easier handling.
 """
 
 from logging import warn
