@@ -1,7 +1,8 @@
 """Functions to evaluate, infer and defuzzify."""
 
+from .classes import Domain
+from .classes import Set
 from math import isinf
-from .classes import Domain, Set
 
 def round_partial(value, res):
     """
@@ -51,11 +52,13 @@ def rescale(out_min, out_max, *, in_min=0, in_max=1):
     b = out_max
     c = in_min
     d = in_max
-        
+    m = (d - c)
+    n = (a * d)
+    o = (b * c)
+
     def f(x):
-        y = (a*d - a*x - b*c + b*x) / (d - c)
+        y = (n - a * x - o + b * x) / e
         return y
-    return f
 
 
 def weighted_sum(*, weights:dict, target_d:Domain) -> float:
