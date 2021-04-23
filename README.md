@@ -1,5 +1,5 @@
 # Fuzzy Logic for Python 3
-This is the fourth time I rebuilt this library from scratch to find the sweet spot between ease of use (beautiful is better than ugly!), testability (simple is better than complex!) and potential to optimize for performance (practicality beats purity!). 
+This is the fourth time I rebuilt this library from scratch to find the sweet spot between ease of use (beautiful is better than ugly!), testability (simple is better than complex!) and potential for performance optimization (practicality beats purity!). 
 
 ### Why a new library?
 The first time I was confronted with fuzzy logic, I fell in love with the concept, but after reading books and checking out libraries etc. I found it frustrating how most people make fuzzy logic appear complicated, hard to handle and incorporate in code.
