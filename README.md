@@ -1,4 +1,4 @@
-Fuzzy Logic for Python 3
+# Fuzzy Logic for Python 3
 
 [![license](https://img.shields.io/github/license/amogorkon/fuzzylogic)](https://github.com/amogorkon/fuzzylogic/blob/master/LICENSE)
 [![stars](https://img.shields.io/github/stars/amogorkon/fuzzylogic?style=plastic)](https://github.com/amogorkon/fuzzylogic/stargazers)
