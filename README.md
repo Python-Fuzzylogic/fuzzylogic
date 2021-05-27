@@ -23,6 +23,7 @@ To make it possible to write fuzzy logic in the most pythonic and simplest way i
 
 # Check out the Showcase!
 For complete examples and documentation how to work with fuzzylogic, check out https://github.com/amogorkon/fuzzylogic/blob/master/docs/Showcase.ipynb !
+
 Have fun!
 
 # Office Hours
