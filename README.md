@@ -13,7 +13,7 @@ Finally, use the Rules to map input domain to output domain to actually control 
 ### Warning: Magic
 To make it possible to write fuzzy logic in the most pythonic and simplest way imaginable, it was necessary to employ some magic tricks that normally are discouraged, but at least there's no black magic involved (aka meta-programming etc.), so things are easy to debug if there is a problem. Most notably:
 * all functions are recursive closures (which makes it kinda hard to serialize things, if you really want to do that)
-* The main classes use a lot of dunder functions to implement their logic, which can be a bit daunting at first glance
+* The main classes use a lot of dunder methods to implement their logic, which can be a bit daunting at first glance
 * Domain and Set uses an assignment trick to make it possible to instantiate Set() without passing domain and name over and over (yet still be explicit, just not the way one would normally expect). This also allows to call sets as Domain.attributes, which also normally shouldn't be possible (since they are technically not attributes). However, this allows interesting things like dangling sets (sets without domains) that can be freely combined with other sets to avoid cluttering of domain-namespaces and just have the resulting set assigned to a domain to work with.
 Check the Showcase notebook in docs on https://github.com/amogorkon/fuzzylogic for working examples and documentation.
 Have fun!
