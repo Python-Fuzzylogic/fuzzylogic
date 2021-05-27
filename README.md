@@ -21,6 +21,13 @@ To make it possible to write fuzzy logic in the most pythonic and simplest way i
 * The main classes use a lot of dunder methods to implement their logic, which can be a bit daunting at first glance
 * Domain and Set uses an assignment trick to make it possible to instantiate Set() without passing domain and name over and over (yet still be explicit, just not the way one would normally expect). This also allows to call sets as Domain.attributes, which also normally shouldn't be possible (since they are technically not attributes). However, this allows interesting things like dangling sets (sets without domains) that can be freely combined with other sets to avoid cluttering of domain-namespaces and just have the resulting set assigned to a domain to work with.
 
+# Installation
+Just enter 
+`python -m pip install fuzzylogic`
+in a commandline prompt and you should be good to go!
+
+It's even more fun to experiment with it in jupyter lab :)
+
 # Check out the Showcase!
 For complete examples and documentation how to work with fuzzylogic, check out https://github.com/amogorkon/fuzzylogic/blob/master/docs/Showcase.ipynb !
 
