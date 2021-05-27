@@ -26,7 +26,7 @@ Just enter
 `python -m pip install fuzzylogic`
 in a commandline prompt and you should be good to go!
 
-It's even more fun to experiment with it in jupyter lab :)
+It's even more fun to experiment with it in jupyter lab ( https://jupyter.org/ ) :-)
 
 # Check out the Showcase!
 For complete examples and documentation how to work with fuzzylogic, check out https://github.com/amogorkon/fuzzylogic/blob/master/docs/Showcase.ipynb !
