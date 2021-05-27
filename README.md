@@ -34,6 +34,6 @@ For complete examples and documentation how to work with fuzzylogic, check out h
 Have fun!
 
 # Office Hours
-You can contact me one-on-one! Please follow https://calendly.com/amogorkon/officehours to set up a meeting :-)
+You can also contact me one-on-one! Please follow https://calendly.com/amogorkon/officehours to set up a meeting :-)
 
 -- Anselm Kiefner
