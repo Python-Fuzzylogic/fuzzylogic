@@ -3,7 +3,7 @@
 [![license](https://img.shields.io/github/license/amogorkon/fuzzylogic)](https://github.com/amogorkon/fuzzylogic/blob/master/LICENSE)
 [![stars](https://img.shields.io/github/stars/amogorkon/fuzzylogic?style=plastic)](https://github.com/amogorkon/fuzzylogic/stargazers)
 [![forks](https://img.shields.io/github/forks/amogorkon/fuzzylogic?style=plastic)](https://github.com/amogorkon/fuzzylogic/network/members)
-[![Downloads](https://pepy.tech/badge/justuse)](https://pepy.tech/project/justuse)
+[![Downloads](https://pepy.tech/badge/justuse)](https://pepy.tech/project/fuzzylogic)
 
 
 This is the fourth time I rebuilt this library from scratch to find the sweet spot between ease of use (beautiful is better than ugly!), testability (simple is better than complex!) and potential for performance optimization (practicality beats purity!). 
