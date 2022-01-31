@@ -427,9 +427,7 @@ class Rule:
         assert len(args) == max(
             len(c) for c in self.conditions.keys()
         ), "Number of values must correspond to the number of domains defined as conditions!"
-        assert isinstance(
-            args, dict
-        ), "Please make sure to pass in the values as a dictionary."
+        assert isinstance(args, dict), "Please make sure to pass in the values as a dictionary."
         if method == "cog":
             assert (
                 len({C.domain for C in self.conditions.values()}) == 1
@@ -443,15 +441,35 @@ class Rule:
             if not weights:
                 return None
             target_domain = list(self.conditions.values())[0].domain
-            index = sum(v.center_of_gravity * x for v, x in weights) / sum(
-                x for v, x in weights
-            )
+            index = sum(v.center_of_gravity * x for v, x in weights) / sum(x for v, x in weights)
             return (target_domain._high - target_domain._low) / len(
                 target_domain.range
             ) * index + target_domain._low
 
 
+def rule_from_table(table: str, references:dict):
+    """Turn a (2D) string table into a Rule of fuzzy sets.
+
+    ATTENTION: This will eval() all strings in the table.
+    This can pose a potential security risk if the table originates from an untrusted source.
+
+    Using a table will considerably reduce the amount of required text to describe all rules,
+    but there are two critical drawbacks: Tables are limited to 2 input variables (2D) and they are strings,
+    with no IDE support. It is strongly recommended to check the Rule output for consistency.
+    For example, a trailing "." will result in a SyntaxError when eval()ed.
+    """
+    import io
+    from itertools import product
+
+    import pandas as pd
+
+    df = pd.read_table(io.StringIO(table))
+    D = {}
+    for x, y in product(range(len(df.index)), range(len(df.columns))):
+        D[(eval(df.index[x].strip(), references), eval(df.columns[y].strip(), references))] = eval(df.iloc[x, y], references)
+    return Rule(D)
+
+
 if __name__ == "__main__":
     import doctest
-
     doctest.testmod()

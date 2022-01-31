@@ -37,6 +37,24 @@ R9 = Rule({(temp.heiß, tan.groß): gef.groß})
 
 rules = R1 | R2 | R3 | R4 | R5 | R6 | R7 | R8 | R9
 
+table = """
+            tan.klein	tan.mittel	tan.groß
+temp.kalt	gef.klein	gef.klein	gef.mittel
+temp.mittel	gef.klein	gef.mittel	gef.groß
+temp.heiß	gef.klein	gef.groß	gef.groß
+"""
+
+table = """
+            hum.dry             hum.wet
+temp.cold   very(motor.slow)    motor.slow
+temp.hot    motor.fast          very(motor.fast)
+"""
+from fuzzylogic.classes import rule_from_table
+
+table_rules = rule_from_table(table, globals())
+
+assert table_rules == rules
+
 value = {temp: 20, tan: 0.55}
 result = rules(value)
 assert isinstance(result, float)
