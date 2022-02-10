@@ -422,7 +422,7 @@ class Rule:
 
     def __call__(self, args: "dict[Domain, float]", method="cog"):
         """Calculate the infered value based on different methods.
-        Default is center of gravity.
+        Default is center of gravity (cog).
         """
         assert len(args) == max(
             len(c) for c in self.conditions.keys()
@@ -433,11 +433,13 @@ class Rule:
                 len({C.domain for C in self.conditions.values()}) == 1
             ), "For CoG, all conditions must have the same target domain."
             actual_values = {f: f(args[f.domain]) for S in self.conditions.keys() for f in S}
-            weights = [
-                (v, x)
-                for K, v in self.conditions.items()
-                if (x := min(actual_values[k] for k in K if k in actual_values)) > 0
-            ]
+
+            weights = []
+            for K, v in self.conditions.items():
+                x = min(actual_values[k] for k in K if k in actual_values)
+                if x > 0:
+                    weights.append((v, x))
+
             if not weights:
                 return None
             target_domain = list(self.conditions.values())[0].domain
@@ -447,7 +449,7 @@ class Rule:
             ) * index + target_domain._low
 
 
-def rule_from_table(table: str, references:dict):
+def rule_from_table(table: str, references: dict):
     """Turn a (2D) string table into a Rule of fuzzy sets.
 
     ATTENTION: This will eval() all strings in the table.
@@ -466,10 +468,13 @@ def rule_from_table(table: str, references:dict):
     df = pd.read_table(io.StringIO(table))
     D = {}
     for x, y in product(range(len(df.index)), range(len(df.columns))):
-        D[(eval(df.index[x].strip(), references), eval(df.columns[y].strip(), references))] = eval(df.iloc[x, y], references)
+        D[(eval(df.index[x].strip(), references), eval(df.columns[y].strip(), references))] = eval(
+            df.iloc[x, y], references
+        )
     return Rule(D)
 
 
 if __name__ == "__main__":
     import doctest
+
     doctest.testmod()
