@@ -436,7 +436,7 @@ class Rule:
 
             weights = []
             for K, v in self.conditions.items():
-                x = min(actual_values[k] for k in K if k in actual_values)
+                x = min((actual_values[k] for k in K if k in actual_values), default=0)
                 if x > 0:
                     weights.append((v, x))
 
@@ -465,7 +465,7 @@ def rule_from_table(table: str, references: dict):
 
     import pandas as pd
 
-    df = pd.read_table(io.StringIO(table))
+    df = pd.read_table(io.StringIO(table), delim_whitespace=True)
     D = {}
     for x, y in product(range(len(df.index)), range(len(df.columns))):
         D[(eval(df.index[x].strip(), references), eval(df.columns[y].strip(), references))] = eval(

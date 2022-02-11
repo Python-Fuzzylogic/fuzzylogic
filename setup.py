@@ -15,7 +15,7 @@ meta = {
     "version": "1.2.0",
     "author": "Anselm Kiefner",
     "author_email": "fuzzylogic-pypi@anselm.kiefner.de",
-    "python_requires": ">=3.8",
+    "python_requires": ">=3.7",
     "keywords": [
         "fuzzy logic",
     ],
