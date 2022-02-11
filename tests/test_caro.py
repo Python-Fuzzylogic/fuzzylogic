@@ -1,12 +1,18 @@
 import sys
+
 from pathlib import Path
 
 src = str((Path(__file__).parent / "../src").resolve())
 sys.path.insert(0, src)
 
 import numpy as np
-from fuzzylogic.classes import Domain, Rule, Set
-from fuzzylogic.functions import R, S, trapezoid
+
+from fuzzylogic.classes import Domain
+from fuzzylogic.classes import Rule
+from fuzzylogic.classes import Set
+from fuzzylogic.functions import R
+from fuzzylogic.functions import S
+from fuzzylogic.functions import trapezoid
 
 temp = Domain("Temperatur", -30, 100, res=0.0001)  # ,res=0.1)
 temp.kalt = S(-10, 30)
@@ -44,11 +50,6 @@ temp.mittel	gef.klein	gef.mittel	gef.groß
 temp.heiß	gef.klein	gef.groß	gef.groß
 """
 
-table = """
-            hum.dry             hum.wet
-temp.cold   very(motor.slow)    motor.slow
-temp.hot    motor.fast          very(motor.fast)
-"""
 from fuzzylogic.classes import rule_from_table
 
 table_rules = rule_from_table(table, globals())
