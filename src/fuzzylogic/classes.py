@@ -309,10 +309,7 @@ class Set:
         """
 
         def f(x):
-            if x < 0.5:
-                return 2 * self.func(x) ** 2
-            else:
-                return 1 - 2 * (1 - self.func(x) ** 2)
+            return 2 * self.func(x) ** 2 if x < 0.5 else 1 - 2 * (1 - self.func(x) ** 2)
 
         return Set(f, domain=self.domain)
 

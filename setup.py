@@ -1,4 +1,5 @@
 import os
+import pathlib
 import sys
 
 here = os.path.abspath(os.path.dirname(__file__))
@@ -36,9 +37,7 @@ meta = {
 }
 
 
-with open("README.md") as f:
-    LONG_DESCRIPTION = f.read()
-
+LONG_DESCRIPTION = pathlib.Path("README.md").read_text()
 setup(
     packages=find_packages(where="src"),
     package_dir={"": "src"},

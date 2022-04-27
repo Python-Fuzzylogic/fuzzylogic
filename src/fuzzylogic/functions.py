@@ -268,10 +268,7 @@ def rectangular(low:float, high:float, *, c_m:float=1, no_m:float=0) -> callable
     assert low < high, f'{low}, {high}'
 
     def f(x:float) -> float:
-        if x < low or high < x:
-            return no_m
-        else:
-            return c_m
+        return no_m if x < low or high < x else c_m
 
     return f
 
@@ -412,12 +409,10 @@ def bounded_sigmoid(low, high, inverse=False):
     def f(x):
         try:
             # e^(0*inf) = 1 for both -inf and +inf
-            if (isinf(k) and x == 0) or (k == 0 and isinf(x)):
-                q = 1.
-            else: q = exp(x * k)
+            q = 1. if (isinf(k) and x == 0) or (k == 0 and isinf(x)) else exp(x * k)
         except OverflowError:
             q = float("inf")
-        
+
         # e^(inf)*e^(-inf) = 1
         r = p * q
         if isnan(r):
@@ -462,14 +457,12 @@ def simple_sigmoid(k=0.229756):
     0.99
     """
     def f(x):
-        # yay for limits..
         if (isinf(x) and k == 0):
             return 1/2
-        else:
-            try:
-                return 1 / (1 + exp(x * -k))
-            except OverflowError:
-                return 0.
+        try:
+            return 1 / (1 + exp(x * -k))
+        except OverflowError:
+            return 0.
     return f
 
 
@@ -492,10 +485,7 @@ def triangular_sigmoid(low, high, c=None):
     right_slope = inv(bounded_sigmoid(c, high))
 
     def f(x):
-        if x <= c:
-            return left_slope(x)
-        else:
-            return right_slope(x)
+        return left_slope(x) if x <= c else right_slope(x)
 
     return f
 
