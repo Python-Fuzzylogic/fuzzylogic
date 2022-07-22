@@ -1,0 +1,11 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite it as below."
+authors:
+- family-names: "Kiefner"
+  given-names: "Anselm"
+  orcid: "https://orcid.org/0000-0002-8009-0733"
+title: "FuzzyLogic for Python"
+version: 1.2.0
+doi: 10.5281/zenodo.6881817
+date-released: 2022-02-15
+url: "https://github.com/amogorkon/fuzzylogic"
