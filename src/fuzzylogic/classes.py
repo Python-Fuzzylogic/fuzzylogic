@@ -139,7 +139,12 @@ class Domain:
 
         High upper bound is INCLUDED unlike range.
         """
-        return np.arange(self._low, self._high + self._res, self._res)
+        if int(self._res) == self._res:
+            return np.arange(self._low, self._high + self._res, int(self._res))
+        else:
+            return np.linspace(
+                self._low, self._high, int((self._high - self._low) / self._res) + 1
+            )
 
     def min(self, x):
         """Standard way to get the min over all membership funcs.
