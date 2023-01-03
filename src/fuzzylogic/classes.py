@@ -53,7 +53,7 @@ class Domain:
 
     __slots__ = ["_name", "_low", "_high", "_res", "_sets"]
 
-    def __init__(self, name, low, high, *, res=1, sets: dict = None):
+    def __init__(self, name: str, low: float, high: float, res=float | int, sets: dict = None):
         """Define a domain."""
         assert low < high, "higher bound must be greater than lower."
         assert res > 0, "resolution can't be negative or zero"

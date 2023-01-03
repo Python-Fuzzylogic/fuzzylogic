@@ -1,4 +1,3 @@
-
 """
 General-purpose functions that map R -> [0,1].
 
@@ -28,94 +27,147 @@ In a fuzzy set with one and only one m == 1, this element is called 'prototype'.
 """
 
 
+from collections.abc import Callable
 from math import exp, isinf, isnan, log
+from typing import Optional
+
+try:
+    from numba import njit
+except ImportError:
+    njit = lambda func: func
 
 #####################
 # SPECIAL FUNCTIONS #
 #####################
 
-def inv(g):
+
+def inv(g: Callable) -> Callable:
     """Invert the given function within the unit-interval.
-    
+
     For sets, the ~ operator uses this. It is equivalent to the TRUTH value of FALSE.
     """
+    try:
+        g = njit(g)
+    except TypeError:
+        pass
+
+    @njit
     def f(x):
         return 1 - g(x)
+
     return f
 
 
-def noop():
+def noop() -> Callable:
     """Do nothing and return the value as is.
-    
+
     Useful for testing.
     """
+
+    @njit
     def f(x):
         return x
+
     return f
 
-def constant(c):
+
+def constant(c: float) -> Callable:
     """Return always the same value, no matter the input.
-    
+
     Useful for testing.
     >>> f = constant(1)
     >>> f(0)
     1
     """
+
+    @njit
     def f(_):
         return c
+
     return f
 
 
-def alpha(*, floor=0, ceiling=1, func,  
-          floor_clip=None, ceiling_clip=None):
+def alpha(
+    *,
+    floor: float = 0,
+    ceiling: float = 1,
+    func: Callable,
+    floor_clip: Optional[float] = None,
+    ceiling_clip: Optional[float] = None,
+):
     """Clip a function's values.
-    
+
     This is used to either cut off the upper or lower part of a graph.
     Actually, this is more like a hedge but doesn't make sense for sets.
     """
     assert floor <= ceiling
     assert 0 <= floor
     assert ceiling <= 1
-    
+
     floor_clip = floor if floor_clip is None else floor_clip
     ceiling_clip = ceiling if ceiling_clip is None else ceiling_clip
-    
-    #assert 0 <= floor_clip <= ceiling_clip <= 1, "%s <= %s"%(floor_clip, ceiling_clip)
-    
+    try:
+        func = njit(func)
+    except TypeError:
+        pass
+
+    # assert 0 <= floor_clip <= ceiling_clip <= 1, "%s <= %s"%(floor_clip, ceiling_clip)
+
+    @njit
     def f(x):
         m = func(x)
         if m >= ceiling:
             return ceiling_clip
         elif m <= floor:
             return floor_clip
-        else: 
+        else:
             return m
+
     return f
+
 
 def normalize(height, func):
     """Map [0,1] to [0,1] so that max(array) == 1."""
     assert 0 < height <= 1
-    
+
+    try:
+        func = njit(func)
+    except TypeError:
+        pass
+
+    @njit
     def f(x):
         return func(x) / height
+
     return f
+
 
 def moderate(func):
     """Map [0,1] -> [0,1] with bias towards 0.5.
 
     For instance this is needed to dampen extremes.
     """
+
+    try:
+        func = njit(func)
+    except TypeError:
+        pass
+
+    @njit
     def f(x):
-        return 1/2 + 4 * (func(x) - 1/2)**3
+        return 1 / 2 + 4 * (func(x) - 1 / 2) ** 3
+
     return f
-    
+
+
 ########################
 # MEMBERSHIP FUNCTIONS #
 ########################
 
+
 def singleton(p, *, no_m=0, c_m=1):
     """A single spike.
-    
+
     >>> f = singleton(2)
     >>> f(1)
     0
@@ -124,14 +176,16 @@ def singleton(p, *, no_m=0, c_m=1):
     """
     assert 0 <= no_m < c_m <= 1
 
+    @njit
     def f(x):
         return c_m if x == p else no_m
+
     return f
 
 
-def linear(m:float=0, b:float=0) -> callable:
+def linear(m: float = 0, b: float = 0) -> callable:
     """A textbook linear function with y-axis section and gradient.
-    
+
     f(x) = m*x + b
     BUT CLIPPED.
 
@@ -149,6 +203,8 @@ def linear(m:float=0, b:float=0) -> callable:
     >>> f(3)    # should be 2 but clipped
     1
     """
+
+    @njit
     def f(x) -> float:
         y = m * x + b
         if y <= 0:
@@ -157,10 +213,11 @@ def linear(m:float=0, b:float=0) -> callable:
             return 1
         else:
             return y
+
     return f
 
 
-def bounded_linear(low, high, *, c_m=1, no_m=0, inverse=False):
+def bounded_linear(low: float, high: float, *, c_m: float = 1, no_m: float = 0, inverse=False):
     """Variant of the linear function with gradient being determined by bounds.
 
     The bounds determine minimum and maximum value-mappings,
@@ -171,7 +228,7 @@ def bounded_linear(low, high, *, c_m=1, no_m=0, inverse=False):
 
     (right_y - left_y) / ((right - left) * (x - self.left) + left_y)
     works.
-    
+
     >>> f = bounded_linear(2, 3)
     >>> f(1)
     0.0
@@ -189,17 +246,19 @@ def bounded_linear(low, high, *, c_m=1, no_m=0, inverse=False):
 
     if inverse:
         c_m, no_m = no_m, c_m
-    
+
     gradient = (c_m - no_m) / (high - low)
-    
+
     # special cases found by hypothesis
-    
+
+    @njit
     def g_0(_):
         return (c_m + no_m) / 2
-    
+
     if gradient == 0:
         return g_0
-    
+
+    @njit
     def g_inf(x):
         asymptode = (high + low) / 2
         if x < asymptode:
@@ -208,28 +267,31 @@ def bounded_linear(low, high, *, c_m=1, no_m=0, inverse=False):
             return c_m
         else:
             return (c_m + no_m) / 2
-    
+
     if isinf(gradient):
         return g_inf
-    
+
+    @njit
     def f(x):
         y = gradient * (x - low) + no_m
         if y < 0:
-            return 0.
+            return 0.0
         if y > 1:
-            return 1.
+            return 1.0
         return y
+
     return f
 
 
 def R(low, high):
     """Simple alternative for bounded_linear().
-    
+
     THIS FUNCTION ONLY CAN HAVE A POSITIVE SLOPE -
     USE THE S() FUNCTION FOR NEGATIVE SLOPE.
     """
     assert low < high, f"{low} >? {high}"
 
+    @njit
     def f(x):
         if x < low or isinf(high - low):
             return 0
@@ -237,11 +299,13 @@ def R(low, high):
             return (x - low) / (high - low)
         else:
             return 1
+
     return f
+
 
 def S(low, high):
     """Simple alternative for bounded_linear.
-    
+
     THIS FUNCTION ONLY CAN HAVE A NEGATIVE SLOPE -
     USE THE R() FUNCTION FOR POSITIVE SLOPE.
     """
@@ -252,22 +316,23 @@ def S(low, high):
             return 1
         elif low < x < high:
             # factorized to avoid nan
-            return high / (high - low) - x / (high - low) 
+            return high / (high - low) - x / (high - low)
         else:
             return 0
+
     return f
 
 
-def rectangular(low:float, high:float, *, c_m:float=1, no_m:float=0) -> callable:
+def rectangular(low: float, high: float, *, c_m: float = 1, no_m: float = 0) -> callable:
     """Basic rectangular function that returns the core_y for the core else 0.
-    
+
         ______
         |    |
     ____|    |___
     """
-    assert low < high, f'{low}, {high}'
+    assert low < high, f"{low}, {high}"
 
-    def f(x:float) -> float:
+    def f(x: float) -> float:
         return no_m if x < low or high < x else c_m
 
     return f
@@ -280,17 +345,19 @@ def triangular(low, high, *, c=None, c_m=1, no_m=0):
     ____/  \___
 
     """
-    assert low < high, 'low must be less than high.'
+    assert low < high, "low must be less than high."
     assert no_m < c_m
-    
-    c = c if c is not None else (low + high) / 2.
+
+    c = c if c is not None else (low + high) / 2.0
     assert low < c < high, "peak must be inbetween"
-    
+
     left_slope = bounded_linear(low, c, no_m=0, c_m=c_m)
     right_slope = inv(bounded_linear(c, high, no_m=0, c_m=c_m))
 
+    @njit
     def f(x):
         return left_slope(x) if x <= c else right_slope(x)
+
     return f
 
 
@@ -303,11 +370,10 @@ def trapezoid(low, c_low, c_high, high, *, c_m=1, no_m=0):
 
     """
     assert low < c_low <= c_high < high
-    assert 0 <= no_m < c_m <= 1 
+    assert 0 <= no_m < c_m <= 1
 
     left_slope = bounded_linear(low, c_low, c_m=c_m, no_m=no_m)
-    right_slope = bounded_linear(c_high, high, c_m=c_m, no_m=no_m,
-                                inverse=True)
+    right_slope = bounded_linear(c_high, high, c_m=c_m, no_m=no_m, inverse=True)
 
     def f(x):
         if x < low or high < x:
@@ -334,15 +400,16 @@ def sigmoid(L, k, x0):
     k = steepness
     """
     # need to be really careful here, otherwise we end up in nanland
-    assert 0 < L <= 1, 'L invalid.'
+    assert 0 < L <= 1, "L invalid."
 
+    @njit
     def f(x):
-        if isnan(k*x):
+        if isnan(k * x):
             # e^(0*inf) = 1
-            o = 1.
+            o = 1.0
         else:
             try:
-                o = exp(-k*(x - x0))
+                o = exp(-k * (x - x0))
             except OverflowError:
                 o = float("inf")
         return L / (1 + o)
@@ -350,6 +417,7 @@ def sigmoid(L, k, x0):
     return f
 
 
+@njit
 def bounded_sigmoid(low, high, inverse=False):
     """
     Calculate a weight based on the sigmoid function.
@@ -358,19 +426,19 @@ def bounded_sigmoid(low, high, inverse=False):
     upper with f(x) = 0.9 and calculate the steepness and elasticity
     based on these. We don't need the general logistic function as we
     operate on [0,1].
-    
+
     core idea:
-    f(x) = 1. / (1. + exp(x * (4. * log(3)) / (low - high)) * 
+    f(x) = 1. / (1. + exp(x * (4. * log(3)) / (low - high)) *
                 9 * exp(low * -(4. * log(3)) / (low - high)))
-    
-    How I got this? IIRC I was playing around with linear equations and 
+
+    How I got this? IIRC I was playing around with linear equations and
     boundary conditions of sigmoid funcs on wolframalpha..
-    
+
     previously factored to:
     k = -(4. * log(3)) / (low - high)
     o = 9 * exp(low * k)
     return 1 / (1 + exp(-k * x) * o)
-    
+
     vars
     ----
     low: x-value with f(x) = 0.1
@@ -388,28 +456,28 @@ def bounded_sigmoid(low, high, inverse=False):
     >>> round(f(-100000), 2)
     0.0
     """
-    assert low < high, 'low must be less than high'
-    
+    assert low < high, "low must be less than high"
+
     if inverse:
         low, high = high, low
-    
-    k = (4. * log(3)) / (low - high)
+
+    k = (4.0 * log(3)) / (low - high)
     try:
         # if high - low underflows to 0..
         if isinf(k):
-            p = 0.
+            p = 0.0
         # just in case k -> 0 and low -> inf
         elif isnan(-k * low):
-            p = 1.
+            p = 1.0
         else:
             p = exp(-k * low)
     except OverflowError:
         p = float("inf")
-    
+
     def f(x):
         try:
             # e^(0*inf) = 1 for both -inf and +inf
-            q = 1. if (isinf(k) and x == 0) or (k == 0 and isinf(x)) else exp(x * k)
+            q = 1.0 if (isinf(k) and x == 0) or (k == 0 and isinf(x)) else exp(x * k)
         except OverflowError:
             q = float("inf")
 
@@ -418,7 +486,9 @@ def bounded_sigmoid(low, high, inverse=False):
         if isnan(r):
             r = 1
         return 1 / (1 + 9 * r)
+
     return f
+
 
 def bounded_exponential(k=0.1, limit=1):
     """Function that goes through the origin and approaches a limit.
@@ -431,12 +501,16 @@ def bounded_exponential(k=0.1, limit=1):
     """
     assert limit > 0
     assert k > 0
+
+    @njit
     def f(x):
-        try: 
-            return limit - limit/exp(k*x)
+        try:
+            return limit - limit / exp(k * x)
         except OverflowError:
             return limit
+
     return f
+
 
 def simple_sigmoid(k=0.229756):
     """Sigmoid variant with only one parameter (steepness).
@@ -456,19 +530,22 @@ def simple_sigmoid(k=0.229756):
     >>> round(f(20), 2)
     0.99
     """
+
+    @njit
     def f(x):
-        if (isinf(x) and k == 0):
-            return 1/2
+        if isinf(x) and k == 0:
+            return 1 / 2
         try:
             return 1 / (1 + exp(x * -k))
         except OverflowError:
-            return 0.
+            return 0.0
+
     return f
 
 
 def triangular_sigmoid(low, high, c=None):
     """Version of triangular using sigmoids instead of linear.
-    
+
     THIS FUNCTION PEAKS AT 0.9
 
     >>> g = triangular_sigmoid(2, 4)
@@ -478,12 +555,13 @@ def triangular_sigmoid(low, high, c=None):
     0.9
     """
     assert low < high, "low must be less than high"
-    c = c if c is not None else (low + high) / 2.
+    c = c if c is not None else (low + high) / 2.0
     assert low < c < high, "c must be inbetween"
 
     left_slope = bounded_sigmoid(low, c)
     right_slope = inv(bounded_sigmoid(c, high))
 
+    @njit
     def f(x):
         return left_slope(x) if x <= c else right_slope(x)
 
@@ -492,7 +570,7 @@ def triangular_sigmoid(low, high, c=None):
 
 def gauss(c, b, *, c_m=1):
     """Defined by ae^(-b(x-x0)^2), a gaussian distribution.
-    
+
     Basically a triangular sigmoid function, it comes close to human perception.
 
     vars
@@ -507,15 +585,18 @@ def gauss(c, b, *, c_m=1):
     assert 0 < c_m <= 1
     assert 0 < b, "b must be greater than 0"
 
+    @njit
     def f(x):
         try:
-            o = (x - c)**2
+            o = (x - c) ** 2
         except OverflowError:
             return 0
         return c_m * exp(-b * o)
+
     return f
 
 
 if __name__ == "__main__":
     import doctest
+
     doctest.testmod()

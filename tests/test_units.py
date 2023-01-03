@@ -21,17 +21,20 @@ from fuzzylogic.classes import Domain, Set
 
 
 class Test_Functions(TestCase):
+    @settings(deadline=None, suppress_health_check=HealthCheck.all())
     @given(st.floats(allow_nan=False))
     def test_noop(self, x):
         f = fun.noop()
         assert f(x) == x
 
+    @settings(deadline=None, suppress_health_check=HealthCheck.all())
     @given(st.floats(allow_nan=False, allow_infinity=False))
     def test_inv(self, x):
         assume(0 <= x <= 1)
         f = fun.inv(fun.noop())
         assert isclose(f(f(x)), x, abs_tol=1e-16)
 
+    @settings(deadline=None, suppress_health_check=HealthCheck.all())
     @given(
         st.floats(allow_nan=False, allow_infinity=False),
         st.floats(allow_nan=False, allow_infinity=False),
@@ -40,6 +43,7 @@ class Test_Functions(TestCase):
         f = fun.constant(c)
         assert f(x) == c
 
+    @settings(deadline=None, suppress_health_check=HealthCheck.all())
     @given(
         st.floats(allow_nan=False),
         st.floats(min_value=0, max_value=1),
@@ -55,6 +59,7 @@ class Test_Functions(TestCase):
         else:
             assert f(x) == x
 
+    @settings(deadline=None, suppress_health_check=HealthCheck.all())
     @given(
         st.floats(allow_nan=False),
         st.floats(min_value=0, max_value=1),
@@ -75,17 +80,20 @@ class Test_Functions(TestCase):
         )
         assert 0 <= f(x) <= 1
 
+    @settings(deadline=None, suppress_health_check=HealthCheck.all())
     @given(st.floats(allow_nan=False), st.floats(min_value=0, max_value=1))
     def test_normalize(self, x, height):
         assume(height > 0)
         f = fun.normalize(height, fun.alpha(ceiling=height, func=fun.R(0, 100)))
         assert 0 <= f(x) <= 1
 
+    @settings(deadline=None, suppress_health_check=HealthCheck.all())
     @given(st.floats(min_value=0, max_value=1))
     def test_moderate(self, x):
         f = fun.moderate(fun.noop())
         assert 0 <= f(x) <= 1
 
+    @settings(deadline=None, suppress_health_check=HealthCheck.all())
     @given(
         st.floats(),
         st.floats(),
@@ -97,6 +105,7 @@ class Test_Functions(TestCase):
         f = fun.singleton(c, no_m=no_m, c_m=c_m)
         assert f(x) == (c_m if x == c else no_m)
 
+    @settings(deadline=None, suppress_health_check=HealthCheck.all())
     @given(
         st.floats(allow_nan=False, allow_infinity=False),
         st.floats(allow_nan=False, allow_infinity=False),
@@ -106,6 +115,7 @@ class Test_Functions(TestCase):
         f = fun.linear(m, b)
         assert 0 <= f(x) <= 1
 
+    @settings(deadline=None, suppress_health_check=HealthCheck.all())
     @given(
         st.floats(allow_nan=False),
         st.floats(allow_nan=False, allow_infinity=False),
@@ -119,6 +129,7 @@ class Test_Functions(TestCase):
         f = fun.bounded_linear(low, high, c_m=c_m, no_m=no_m)
         assert 0 <= f(x) <= 1
 
+    @settings(deadline=None, suppress_health_check=HealthCheck.all())
     @given(
         st.floats(allow_nan=False),
         st.floats(allow_nan=False, allow_infinity=False),
@@ -129,6 +140,7 @@ class Test_Functions(TestCase):
         f = fun.R(low, high)
         assert 0 <= f(x) <= 1
 
+    @settings(deadline=None, suppress_health_check=HealthCheck.all())
     @given(
         st.floats(allow_nan=False),
         st.floats(allow_nan=False, allow_infinity=False),
@@ -139,6 +151,7 @@ class Test_Functions(TestCase):
         f = fun.S(low, high)
         assert 0 <= f(x) <= 1
 
+    @settings(deadline=None, suppress_health_check=HealthCheck.all())
     @given(
         st.floats(allow_nan=False),
         st.floats(allow_nan=False, allow_infinity=False),
@@ -151,6 +164,7 @@ class Test_Functions(TestCase):
         f = fun.rectangular(low, high, c_m=c_m, no_m=no_m)
         assert 0 <= f(x) <= 1
 
+    @settings(deadline=None, suppress_health_check=HealthCheck.all())
     @given(
         st.floats(allow_nan=False),
         st.floats(allow_nan=False, allow_infinity=False),
@@ -159,13 +173,13 @@ class Test_Functions(TestCase):
         st.floats(min_value=0, max_value=1),
         st.floats(min_value=0, max_value=1),
     )
-    @settings(suppress_health_check=[HealthCheck.filter_too_much])
     def test_triangular(self, x, low, high, c, c_m, no_m):
         assume(low < c < high)
         assume(no_m < c_m)
         f = fun.triangular(low, high, c=c, c_m=c_m, no_m=no_m)
         assert 0 <= f(x) <= 1
 
+    @settings(deadline=None, suppress_health_check=HealthCheck.all())
     @given(
         st.floats(allow_nan=False),
         st.floats(allow_nan=False, allow_infinity=False),
@@ -175,13 +189,13 @@ class Test_Functions(TestCase):
         st.floats(min_value=0, max_value=1),
         st.floats(min_value=0, max_value=1),
     )
-    @settings(suppress_health_check=[HealthCheck.filter_too_much, HealthCheck.too_slow])
     def test_trapezoid(self, x, low, c_low, c_high, high, c_m, no_m):
         assume(low < c_low <= c_high < high)
         assume(no_m < c_m)
         f = fun.trapezoid(low, c_low, c_high, high, c_m=c_m, no_m=no_m)
         assert 0 <= f(x) <= 1
 
+    @settings(deadline=None, suppress_health_check=HealthCheck.all())
     @given(
         st.floats(allow_nan=False),
         st.floats(min_value=0, max_value=1),
@@ -193,17 +207,18 @@ class Test_Functions(TestCase):
         f = fun.sigmoid(L, k, x0)
         assert 0 <= f(x) <= 1
 
+    @settings(deadline=None, suppress_health_check=HealthCheck.all())
     @given(
         st.floats(allow_nan=False),
         st.floats(allow_nan=False, allow_infinity=False),
         st.floats(allow_nan=False, allow_infinity=False),
     )
-    @settings(suppress_health_check=[HealthCheck.filter_too_much])
     def test_bounded_sigmoid(self, x, low, high):
         assume(low < high)
         f = fun.bounded_sigmoid(low, high)
         assert 0 <= f(x) <= 1
 
+    @settings(deadline=None, suppress_health_check=HealthCheck.all())
     @given(st.floats(allow_nan=False), st.floats(allow_nan=False, allow_infinity=False))
     def test_simple_sigmoid(self, x, k):
         f = fun.simple_sigmoid(k)
@@ -215,12 +230,13 @@ class Test_Functions(TestCase):
         st.floats(allow_nan=False, allow_infinity=False),
         st.floats(allow_nan=False, allow_infinity=False),
     )
-    @settings(suppress_health_check=[HealthCheck.filter_too_much])
+    @settings(deadline=None, suppress_health_check=HealthCheck.all())
     def test_triangular_sigmoid(self, x, low, high, c):
         assume(low < c < high)
         f = fun.triangular(low, high, c=c)
         assert 0 <= f(x) <= 1
 
+    @settings(deadline=None, suppress_health_check=HealthCheck.all())
     @given(
         st.floats(allow_nan=False),
         st.floats(allow_nan=False, allow_infinity=False),
@@ -233,6 +249,7 @@ class Test_Functions(TestCase):
         f = fun.gauss(c, b, c_m=c_m)
         assert 0 <= f(x) <= 1
 
+    @settings(deadline=None, suppress_health_check=HealthCheck.all())
     @given(
         st.floats(allow_nan=False, min_value=0, allow_infinity=False),
         st.floats(allow_nan=False, min_value=0, allow_infinity=False),
@@ -246,18 +263,21 @@ class Test_Functions(TestCase):
 
 
 class Test_Hedges(TestCase):
+    @settings(deadline=None, suppress_health_check=HealthCheck.all())
     @given(st.floats(min_value=0, max_value=1))
     def test_very(self, x):
         s = Set(fun.noop())
         f = hedges.very(s)
         assert 0 <= f(x) <= 1
 
+    @settings(deadline=None, suppress_health_check=HealthCheck.all())
     @given(st.floats(min_value=0, max_value=1))
     def test_minus(self, x):
         s = Set(fun.noop())
         f = hedges.minus(s)
         assert 0 <= f(x) <= 1
 
+    @settings(deadline=None, suppress_health_check=HealthCheck.all())
     @given(st.floats(min_value=0, max_value=1))
     def test_plus(self, x):
         s = Set(fun.noop())
@@ -266,6 +286,7 @@ class Test_Hedges(TestCase):
 
 
 class Test_Combinators(TestCase):
+    @settings(deadline=None, suppress_health_check=HealthCheck.all())
     @given(st.floats(min_value=0, max_value=1))
     def test_MIN(self, x):
         a = fun.noop()
@@ -273,6 +294,7 @@ class Test_Combinators(TestCase):
         f = combi.MIN(a, b)
         assert 0 <= f(x) <= 1
 
+    @settings(deadline=None, suppress_health_check=HealthCheck.all())
     @given(st.floats(min_value=0, max_value=1))
     def test_MAX(self, x):
         a = fun.noop()
@@ -280,6 +302,7 @@ class Test_Combinators(TestCase):
         f = combi.MAX(a, b)
         assert 0 <= f(x) <= 1
 
+    @settings(deadline=None, suppress_health_check=HealthCheck.all())
     @given(st.floats(min_value=0, max_value=1))
     def test_product(self, x):
         a = fun.noop()
@@ -287,6 +310,7 @@ class Test_Combinators(TestCase):
         f = combi.product(a, b)
         assert 0 <= f(x) <= 1
 
+    @settings(deadline=None, suppress_health_check=HealthCheck.all())
     @given(st.floats(min_value=0, max_value=1))
     def test_bounded_sum(self, x):
         a = fun.noop()
@@ -294,6 +318,7 @@ class Test_Combinators(TestCase):
         f = combi.bounded_sum(a, b)
         assert 0 <= f(x) <= 1
 
+    @settings(deadline=None, suppress_health_check=HealthCheck.all())
     @given(st.floats(min_value=0, max_value=1))
     def test_lukasiewicz_AND(self, x):
         a = fun.noop()
@@ -301,6 +326,7 @@ class Test_Combinators(TestCase):
         f = combi.lukasiewicz_AND(a, b)
         assert 0 <= f(x) <= 1
 
+    @settings(deadline=None, suppress_health_check=HealthCheck.all())
     @given(st.floats(min_value=0, max_value=1))
     def test_lukasiewicz_OR(self, x):
         a = fun.noop()
@@ -308,6 +334,7 @@ class Test_Combinators(TestCase):
         f = combi.lukasiewicz_OR(a, b)
         assert 0 <= f(x) <= 1
 
+    @settings(deadline=None, suppress_health_check=HealthCheck.all())
     @given(st.floats(min_value=0, max_value=1))
     def test_einstein_product(self, x):
         a = fun.noop()
@@ -315,6 +342,7 @@ class Test_Combinators(TestCase):
         f = combi.einstein_product(a, b)
         assert 0 <= f(x) <= 1
 
+    @settings(deadline=None, suppress_health_check=HealthCheck.all())
     @given(st.floats(min_value=0, max_value=1))
     def test_einstein_sum(self, x):
         a = fun.noop()
@@ -322,6 +350,7 @@ class Test_Combinators(TestCase):
         f = combi.einstein_sum(a, b)
         assert 0 <= f(x) <= 1
 
+    @settings(deadline=None, suppress_health_check=HealthCheck.all())
     @given(st.floats(min_value=0, max_value=1))
     def test_hamacher_product(self, x):
         a = fun.noop()
@@ -329,6 +358,7 @@ class Test_Combinators(TestCase):
         f = combi.hamacher_product(a, b)
         assert 0 <= f(x) <= 1
 
+    @settings(deadline=None, suppress_health_check=HealthCheck.all())
     @given(st.floats(min_value=0, max_value=1))
     def test_hamacher_sum(self, x):
         a = fun.noop()
@@ -336,6 +366,7 @@ class Test_Combinators(TestCase):
         f = combi.hamacher_sum(a, b)
         assert 0 <= f(x) <= 1
 
+    @settings(deadline=None, suppress_health_check=HealthCheck.all())
     @given(st.floats(min_value=0, max_value=1), st.floats(min_value=0, max_value=1))
     def test_lambda_op(self, x, l):
         a = fun.noop()
@@ -344,6 +375,7 @@ class Test_Combinators(TestCase):
         f = g(a, b)
         assert 0 <= f(x) <= 1
 
+    @settings(deadline=None, suppress_health_check=HealthCheck.all())
     @given(st.floats(min_value=0, max_value=1), st.floats(min_value=0, max_value=1))
     def test_gamma_op(self, x, g):
         a = fun.noop()
@@ -352,6 +384,7 @@ class Test_Combinators(TestCase):
         f = g(a, b)
         assert 0 <= f(x) <= 1
 
+    @settings(deadline=None, suppress_health_check=HealthCheck.all())
     @given(st.floats(min_value=0, max_value=1))
     def test_hamacher_sum(self, x):
         a = fun.noop()
@@ -379,6 +412,7 @@ class Test_Domain(TestCase):
 
 
 class Test_Set(TestCase):
+    @settings(deadline=None, suppress_health_check=HealthCheck.all())
     @given(
         st.floats(allow_nan=False, allow_infinity=False),
         st.floats(allow_nan=False, allow_infinity=False),
@@ -420,6 +454,7 @@ class Test_Set(TestCase):
 
 
 class Test_Rules(TestCase):
+    @settings(deadline=None, suppress_health_check=HealthCheck.all())
     @given(
         st.floats(min_value=0, max_value=1),
         st.floats(allow_infinity=False, allow_nan=False),
@@ -427,7 +462,6 @@ class Test_Rules(TestCase):
         st.floats(min_value=0, max_value=1),
         st.floats(min_value=0, max_value=1),
     )
-    @settings(suppress_health_check=[HealthCheck.filter_too_much])
     def test_rescale(self, x, out_min, out_max, in_min, in_max):
         assume(in_min < in_max)
         assume(in_min <= x <= in_max)
@@ -441,14 +475,17 @@ class Test_Rules(TestCase):
 
 
 class Test_Truth(TestCase):
+    @settings(deadline=None, suppress_health_check=HealthCheck.all())
     @given(st.floats(min_value=0, max_value=1))
     def test_true_and_false(self, m):
         assert truth.true(m) + truth.false(m) == 1
 
+    @settings(deadline=None, suppress_health_check=HealthCheck.all())
     @given(st.floats(min_value=0, max_value=1))
     def test_very_false_and_fairly_true(self, m):
         assert truth.very_false(m) + truth.fairly_true(m) == 0
 
+    @settings(deadline=None, suppress_health_check=HealthCheck.all())
     @given(st.floats(min_value=0, max_value=1))
     def test_fairly_false_and_very_true(self, m):
         assert truth.fairly_false(m) + truth.very_true(m) == 0

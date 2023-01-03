@@ -1,18 +1,12 @@
 import sys
-
 from pathlib import Path
 
 src = str((Path(__file__).parent / "../src").resolve())
 sys.path.insert(0, src)
 
 import numpy as np
-
-from fuzzylogic.classes import Domain
-from fuzzylogic.classes import Rule
-from fuzzylogic.classes import Set
-from fuzzylogic.functions import R
-from fuzzylogic.functions import S
-from fuzzylogic.functions import trapezoid
+from fuzzylogic.classes import Domain, Rule
+from fuzzylogic.functions import R, S, trapezoid
 
 temp = Domain("Temperatur", -30, 100, res=0.0001)  # ,res=0.1)
 temp.kalt = S(-10, 30)

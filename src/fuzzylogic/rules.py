@@ -27,9 +27,7 @@ def round_partial(value, res):
     3.14
     """
     # backed up by wolframalpha
-    if res == 0 or isinf(res):
-        return value
-    return round(value / res) * res
+    return value if res == 0 or isinf(res) else round(value / res) * res
 
 
 def rescale(out_min, out_max, *, in_min=0, in_max=1):
