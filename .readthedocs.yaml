@@ -6,8 +6,13 @@ build:
     python: "3.11"
 
 sphinx:
-   configuration: docs/conf.py
-
-#python:
-#   install:
-#   - requirements: docs/requirements.txt
+   configuration: docs/source/conf.py
+# Optionally set the version of Python and requirements required to build your docs
+python:
+  version: "3.11"
+  install:
+    - method: pip
+      path: .
+      extra_requirements:
+        - docs
+        - myst_parser
