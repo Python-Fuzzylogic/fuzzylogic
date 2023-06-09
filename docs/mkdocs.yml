@@ -1,0 +1,15 @@
+site_name: Fuzzy Logic
+nav:
+    - Home: index.md
+    - Tutorial: Showcase.md
+    - FAQ's: How-To.md
+    - Discussion: Discussion.md
+    - API Reference:
+        - classes: classes.md
+        - combinators: combinators.md
+        - functions: functions.md
+        - hedges: hedges.md
+        - rules: rules.md
+        - truth : truth.md
+
+theme: readthedocs
