@@ -1,18 +1,23 @@
-version: 2
-
-build:
-  os: ubuntu-22.04
-  tools:
-    python: "3.11"
+version: 3
 
 sphinx:
-  configuration: docs/source/conf.py
-# Optionally set the version of Python and requirements required to build your docs
-python:
-  install:
-    - method: pip
-      path: .
-      extra_requirements:
-        - docs
-        - myst-parser
-        - sphinxcontrib-mermaid
+  docker:
+    - image: python:3.8
+      environment:
+        - READTHEDOCS: 'True'
+      commands:
+        - pip install mkdocs
+        - mkdocs build --clean
+
+build:
+  image: python:3.8
+  environment:
+    - READTHEDOCS: 'True'
+  commands:
+    - pip install mkdocs
+    - mkdocs build --clean
+
+dependencies:
+  override:
+    - pip install -r requirements.txt
+
