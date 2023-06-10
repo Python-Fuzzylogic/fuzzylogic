@@ -1,23 +1,5 @@
 version: 2
 
-sphinx:
-  docker:
-    - image: python:3.8
-      environment:
-        - READTHEDOCS: 'True'
-      commands:
-        - pip install mkdocs
-        - mkdocs build --clean
-
-build:
-  image: python:3.8
-  environment:
-    - READTHEDOCS: 'True'
-  commands:
-    - pip install mkdocs
-    - mkdocs build --clean
-
-dependencies:
-  override:
-    - pip install -r requirements.txt
-
+mkdocs:
+  configuration: mkdocs.yml
+  fail_on_warning: false
