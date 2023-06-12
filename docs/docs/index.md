@@ -28,7 +28,7 @@ To make it possible to write fuzzy logic in the most pythonic and simplest way i
 # Installation
 Just enter 
 `python -m pip install fuzzylogic`
-in a commandline prompt and you should be good to go!
+in a commandline prompt and you should be good to go!!!
 
 It's even more fun to experiment with it in jupyter lab ( https://jupyter.org/ ) :-)
 
