@@ -12,6 +12,8 @@ jobs:
           cat README.md > docs/docs/index.md
       - name: Commit and push changes
         run: |
+          git config --global user.name ${{github.event.sender}}
+          git config --global user.email ${{github.event.email}}
           git add docs/docs/index.md
           git commit -m "Update docs/docs/index.md"
           git push
