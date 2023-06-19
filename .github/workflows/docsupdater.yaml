@@ -1,11 +1,5 @@
 name: Update docs/docs/index.md
-on:
-  push:
-    branches:
-      - main
-  pull_request:
-    branches:
-      - main
+on: push
 
 jobs:
   update-docs:
