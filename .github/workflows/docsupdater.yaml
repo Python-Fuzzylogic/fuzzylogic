@@ -1,0 +1,28 @@
+name: Update docs/dcos/index.md
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  update-docs:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Update docs/dcos/index.md
+        run: |
+          echo "Generating docs/dcos/index.md..."
+          sed -e "s|{{ README_CONTENT }}|$(cat README.md)|g" docs/dcos/index.md > docs/dcos/index.md.new
+          mv docs/dcos/index.md.new docs/dcos/index.md
+      - name: Serve site
+        run: |
+          echo "Serving site..."
+          jekyll serve
+      - name: Commit and push changes
+        run: |
+          git add docs/dcos/index.md
+          git commit -m "Update docs/dcos/index.md"
+          git push 

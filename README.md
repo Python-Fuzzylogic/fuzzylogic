@@ -28,7 +28,7 @@ Just enter
 `python -m pip install fuzzylogic`
 in a commandline prompt and you should be good to go!
 
-It's even more fun to experiment with it in jupyter lab ( https://jupyter.org/ ) :-)
+It's even more fun to experiment with it in [Jupyter Lab](https://jupyter.org) :-)
 
 # Documentation
 Thanks to [Atul Kushwaha](https://github.com/coderatul), we now have an amazing [documentation](https://fuzzylogic.readthedocs.io/en/latest/) including our [Showcase](https://github.com/amogorkon/fuzzylogic/blob/master/docs/Showcase.ipynb) - check it out!
@@ -37,5 +37,9 @@ Thanks to [Atul Kushwaha](https://github.com/coderatul), we now have an amazing 
 You can also contact me one-on-one! Please follow https://calendly.com/amogorkon/officehours to set up a meeting :-)
 
 huh
+
+# Office Hours
+You can also contact me one-on-one! Check my [office hours](https://calendly.com/amogorkon/officehours) to set up a meeting :-)
+
 
 -- Anselm Kiefner
