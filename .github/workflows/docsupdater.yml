@@ -1,0 +1,29 @@
+name: Update Index File
+
+on:
+  push:
+    paths:
+      - 'readme.md'
+
+jobs:
+  updateIndex:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Check out repository
+      uses: actions/checkout@v2
+
+    - name: Update index file
+      run: |
+        # Store the updated content in a variable
+        updated_content=$(cat readme.md)
+        
+        # Write the updated content to docs/docs/index.md
+        echo "$updated_content" > docs/docs/index.md
+        
+        # Commit the changes
+        git config --local user.email "action@github.com"
+        git config --local user.name "GitHub Action"
+        git add docs/docs/index.md
+        git commit -m "Update index file"
+        git push
