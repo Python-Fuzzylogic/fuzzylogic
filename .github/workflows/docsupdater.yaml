@@ -9,8 +9,10 @@ jobs:
       - name: Update docs/docs/index.md
         run: |
           echo "Generating docs/docs/index.md..."
-          sed -e "s|{{ README_CONTENT }}|$(cat README.md)|g" docs/docs/index.md
+          sed -e "s|{{ README_CONTENT }}|$(cat README.md)|g" docs/docs/index.md > updated_index.md
+          mv updated_index.md docs/docs/index.md
       - name: Commit and push changes
         run: |
           git add docs/docs/index.md
           git commit -m "Update docs/docs/index.md"
+          git push
