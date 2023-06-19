@@ -1,4 +1,4 @@
-name: Update docs/dcos/index.md
+name: Update docs/docs/index.md
 on:
   push:
     branches:
@@ -12,11 +12,11 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
-      - name: Update docs/dcos/index.md
+      - name: Update docs/docs/index.md
         run: |
-          echo "Generating docs/dcos/index.md..."
-          sed -e "s|{{ README_CONTENT }}|$(cat README.md)|g" docs/dcos/index.md > docs/dcos/index.md.new
-          mv docs/dcos/index.md.new docs/dcos/index.md
+          echo "Generating docs/docs/index.md..."
+          sed -e "s|{{ README_CONTENT }}|$(cat README.md)|g" docs/docs/index.md > docs/docs/index.md.new
+          mv docs/docs/index.md.new docs/docs/index.md
       - name: Serve site
         run: |
           echo "Serving site..."
@@ -24,5 +24,5 @@ jobs:
       - name: Commit and push changes
         run: |
           git add docs/dcos/index.md
-          git commit -m "Update docs/dcos/index.md"
+          git commit -m "Update docs/docs/index.md"
           git push 
