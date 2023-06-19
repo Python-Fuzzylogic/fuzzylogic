@@ -9,14 +9,8 @@ jobs:
       - name: Update docs/docs/index.md
         run: |
           echo "Generating docs/docs/index.md..."
-          sed -e "s|{{ README_CONTENT }}|$(cat README.md)|g" docs/docs/index.md > docs/docs/index.md
-          mv docs/docs/index.md.new docs/docs/index.md
-      - name: Serve site
-        run: |
-          echo "Serving site..."
-          jekyll serve
+          sed -e "s|{{ README_CONTENT }}|$(cat README.md)|g" docs/docs/index.md
       - name: Commit and push changes
         run: |
           git add docs/docs/index.md
           git commit -m "Update docs/docs/index.md"
-          git push 
