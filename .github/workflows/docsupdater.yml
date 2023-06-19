@@ -1,5 +1,4 @@
-name: Update Index File
-
+name: Update docs/dcos/index.md
 on:
   push:
     branches:
@@ -9,18 +8,17 @@ on:
       - main
 
 jobs:
-  update_index:
+  update-docs:
     runs-on: ubuntu-latest
-
     steps:
-    - name: Checkout repository
-      uses: actions/checkout@v2
-
-    - name: Update Index File
-      run: |
-        cp README.md docs/docs/index.md
-        git add docs/docs/index.md
-        git config --local user.email "action@github.com"
-        git config --local user.name "GitHub Action"
-        git commit -m "Update index.md file" --no-verify
-        git push
+      - uses: actions/checkout@v2
+      - name: Update docs/dcos/index.md
+        run: |
+          echo "Generating docs/dcos/index.md..."
+          sed -e "s|{{ README_CONTENT }}|$(cat README.md)|g" docs/dcos/index.md > docs/dcos/index.md.new
+          mv docs/dcos/index.md.new docs/dcos/index.md
+      - name: Commit and push changes
+        run: |
+          git add docs/dcos/index.md
+          git commit -m "Update docs/dcos/index.md"
+          git push
