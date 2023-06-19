@@ -16,3 +16,5 @@ jobs:
           git add docs/docs/index.md
           git commit -m "Update docs/docs/index.md"
           git push
+
+    
