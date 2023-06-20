@@ -17,13 +17,11 @@ Finally, most education on the subject emphasize sets and membership functions, 
 ### The Idea
 So, the idea is to have three parts that work together: domains, sets and rules. Each of these classes wrap additional logic around basic building blocks - Set gives logical operations to simple functions, Domain gives additional logic to numpy arrays and groups Sets together while Rule combines different Domains. You start modelling your system by defining your domain of interest. Then you think about where your interesting points are in that domain and look for a function that might do what you want. In general, fuzzy.functions map any value to [0,1], that's all. Simply wrap the function in a Set and assign it to the domain in question. Once assigned, you can plot that set and see if it actually looks how you imagined. Now that you have one or more sets, you also can start to combine them with set operations &, |, ~, etc. It's fairly straight forward.
 Finally, use the Rules to map input domain to output domain to actually control stuff.
-
 ### Warning: Magic
 To make it possible to write fuzzy logic in the most pythonic and simplest way imaginable, it was necessary to employ some magic tricks that normally are discouraged, but at least there's no black magic involved (aka meta-programming etc.), so things are easy to debug if there is a problem. Most notably:
-
- * All functions are recursive closures (which makes it kinda hard to serialize things, if you really want to do that)
- * The main classes use a lot of dunder methods to implement their logic, which can be a bit daunting at first glance
- * Domain and Set uses an assignment trick to make it possible to instantiate Set() without passing domain and name over and over (yet still be explicit, just not the way one would normally expect). This also allows to call sets as Domain.attributes, which also normally shouldn't be possible (since they are technically not attributes). However, this allows interesting things like dangling sets (sets without domains) that can be freely combined with other sets to avoid cluttering of domain-namespaces and just have the resulting set assigned to a domain to work with.
+* all functions are recursive closures (which makes it kinda hard to serialize things, if you really want to do that)
+* The main classes use a lot of dunder methods to implement their logic, which can be a bit daunting at first glance
+* Domain and Set uses an assignment trick to make it possible to instantiate Set() without passing domain and name over and over (yet still be explicit, just not the way one would normally expect). This also allows to call sets as Domain.attributes, which also normally shouldn't be possible (since they are technically not attributes). However, this allows interesting things like dangling sets (sets without domains) that can be freely combined with other sets to avoid cluttering of domain-namespaces and just have the resulting set assigned to a domain to work with.
 
 # Installation
 Just enter 
