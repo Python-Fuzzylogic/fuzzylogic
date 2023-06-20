@@ -2,6 +2,8 @@ name: Update docs/docs/index.md
 on: push
 permissions:
   pull-requests: write
+  contents: write 
+  repository-projects: write
 
 jobs:
   update-docs:
