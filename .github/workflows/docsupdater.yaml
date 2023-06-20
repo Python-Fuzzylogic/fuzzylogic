@@ -1,5 +1,6 @@
 name: Update docs/docs/index.md
 on: push
+permissions: read-all|write-all
 
 jobs:
   update-docs:
