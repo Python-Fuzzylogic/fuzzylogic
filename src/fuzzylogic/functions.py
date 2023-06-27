@@ -1,7 +1,7 @@
 """
 General-purpose functions that map R -> [0,1].
- 
-These functions work as closures. 
+
+These functions work as closures.
 The inner function uses the variables of the outer function.
 
 These functions work in two steps: prime and call.
@@ -27,6 +27,7 @@ In a fuzzy set with one and only one m == 1, this element is called 'prototype'.
 """
 
 
+import contextlib
 from collections.abc import Callable
 from math import exp, isinf, isnan, log
 from typing import Optional
@@ -34,7 +35,7 @@ from typing import Optional
 try:
     from numba import njit
 except ImportError:
-    njit = lambda func: func
+    njit = lambda func: func  # noqa: E731
 
 #####################
 # SPECIAL FUNCTIONS #
@@ -46,10 +47,8 @@ def inv(g: Callable) -> Callable:
 
     For sets, the ~ operator uses this. It is equivalent to the TRUTH value of FALSE.
     """
-    try:
+    with contextlib.suppress(TypeError):
         g = njit(g)
-    except TypeError:
-        pass
 
     @njit
     def f(x):
@@ -100,17 +99,14 @@ def alpha(
     This is used to either cut off the upper or lower part of a graph.
     Actually, this is more like a hedge but doesn't make sense for sets.
     """
-    assert floor <= ceiling
-    assert 0 <= floor
-    assert ceiling <= 1
+    assert floor <= ceiling, breakpoint()
+    assert 0 <= floor, breakpoint()
+    assert ceiling <= 1, breakpoint()
 
     floor_clip = floor if floor_clip is None else floor_clip
     ceiling_clip = ceiling if ceiling_clip is None else ceiling_clip
-    try:
+    with contextlib.suppress(TypeError):
         func = njit(func)
-    except TypeError:
-        pass
-
     # assert 0 <= floor_clip <= ceiling_clip <= 1, "%s <= %s"%(floor_clip, ceiling_clip)
 
     @njit
@@ -130,10 +126,8 @@ def normalize(height, func):
     """Map [0,1] to [0,1] so that max(array) == 1."""
     assert 0 < height <= 1
 
-    try:
+    with contextlib.suppress(TypeError):
         func = njit(func)
-    except TypeError:
-        pass
 
     @njit
     def f(x):
@@ -148,10 +142,8 @@ def moderate(func):
     For instance this is needed to dampen extremes.
     """
 
-    try:
+    with contextlib.suppress(TypeError):
         func = njit(func)
-    except TypeError:
-        pass
 
     @njit
     def f(x):
@@ -183,7 +175,7 @@ def singleton(p, *, no_m=0, c_m=1):
     return f
 
 
-def linear(m: float = 0, b: float = 0) -> callable:
+def linear(m: float = 0, b: float = 0) -> Callable:
     """A textbook linear function with y-axis section and gradient.
 
     f(x) = m*x + b
@@ -217,7 +209,9 @@ def linear(m: float = 0, b: float = 0) -> callable:
     return f
 
 
-def bounded_linear(low: float, high: float, *, c_m: float = 1, no_m: float = 0, inverse=False):
+def bounded_linear(
+    low: float, high: float, *, c_m: float = 1, no_m: float = 0, inverse=False
+):
     """Variant of the linear function with gradient being determined by bounds.
 
     The bounds determine minimum and maximum value-mappings,
@@ -276,9 +270,7 @@ def bounded_linear(low: float, high: float, *, c_m: float = 1, no_m: float = 0, 
         y = gradient * (x - low) + no_m
         if y < 0:
             return 0.0
-        if y > 1:
-            return 1.0
-        return y
+        return 1.0 if y > 1 else y
 
     return f
 
@@ -323,7 +315,9 @@ def S(low, high):
     return f
 
 
-def rectangular(low: float, high: float, *, c_m: float = 1, no_m: float = 0) -> callable:
+def rectangular(
+    low: float, high: float, *, c_m: float = 1, no_m: float = 0
+) -> Callable:
     """Basic rectangular function that returns the core_y for the core else 0.
 
         ______
@@ -363,7 +357,7 @@ def triangular(low, high, *, c=None, c_m=1, no_m=0):
 
 def trapezoid(low, c_low, c_high, high, *, c_m=1, no_m=0):
     r"""Combination of rectangular and triangular, for convenience.
-    
+
           ____
          /    \
     ____/      \___

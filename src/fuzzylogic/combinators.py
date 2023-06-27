@@ -3,7 +3,7 @@ Combine two linguistic terms.
 
 a and b are functions of two sets of the same domain.
 
-Since these combinators are used directly in the Set class to implement logic operations, 
+Since these combinators are used directly in the Set class to implement logic operations,
 the most obvious use of this module is when subclassing Set to make use of specific combinators
 for special circumstances.
 
@@ -30,7 +30,7 @@ which are then turned into a fixed list and numba.njit-ed in the future.
 > f = bounded_sum(R(0, 10), R(5, 15), S(0, 10))
 
 would return the inner F function and prepare everything for operation in an initialization phase.
-Now ready for operational phase, when called with a value like `f(5)`, 
+Now ready for operational phase, when called with a value like `f(5)`,
 the inner function applies all specified functions to this value
 and combines these membership-values via the inner op function, reducing it all to a single value in [0,1].
 """
@@ -40,12 +40,12 @@ from functools import reduce
 
 from numpy import multiply
 
-from .functions import noop
-
 try:
     from numba import njit
 except ImportError:
-    njit = lambda func: func
+
+    def njit(func):
+        return func
 
 
 def MIN(*guncs) -> Callable:
@@ -178,18 +178,20 @@ def hamacher_sum(*guncs):
     return F
 
 
-def lambda_op(l):
+def lambda_op(h):
     """A 'compensatoric' operator, combining AND with OR by a weighing factor l.
 
-    This complicates matters a little, since all normal combinators only take functions as parameters so we parametrize this with l in a pre-init step.
+    This complicates matters a little, since all normal combinators only take functions
+    as parameters so we parametrize this with l in a pre-init step.
     """
-    assert 0 <= l <= 1
+    assert 0 <= h <= 1, breakpoint()
 
+# sourcery skip: use-function-docstrings
     def E(*guncs):
         funcs = list(guncs)
 
         def op(x, y):
-            return l * (x * y) + (1 - l) * (x + y - x * y)
+            return h * (x * y) + (1 - h) * (x + y - x * y)
 
         def F(z):
             return reduce(op, (f(z) for f in funcs))
@@ -207,7 +209,8 @@ def gamma_op(g):
     g (gamma-factor)
         0 < g < 1 (g == 0 -> AND; g == 1 -> OR)
 
-    Same problem as with lambda_op, since all combinators only take functions as arguments, so we parametrize this with g in a pre-init step.
+    Same problem as with lambda_op, since all combinators only take functions as arguments,
+    so we parametrize this with g in a pre-init step.
     """
     assert 0 <= g <= 1
 
@@ -274,9 +277,10 @@ def simple_disjoint_sum(*guncs):
         # print(x, [1-y for y in args-set([x])])
 
         # FYI: this works because M-set([x]) returns a new set without x, which we use to construct a new set
-        # with inverted values - however, if M only has one value, which is the case if all given values are equal -
-        # we have to handle an empty generator expression, which the "or (1-x,)" does.
-        # Lastly, the *(...) is needed because min only takes one single iterator, so we need to unzip the rest.
+        # with inverted values - however, if M only has one value,
+        # which is the case if all given values are equal - we have to handle an empty generator expression,
+        # which the "or (1-x,)" does.
+        # Lastly, the *(...) is needed because min only takes one single iterator, so we need to unzip.
         return max(min((x, *({1 - y for y in M - set([x])} or (1 - x,)))) for x in M)
 
     return F

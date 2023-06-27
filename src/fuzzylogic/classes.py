@@ -1,11 +1,12 @@
 """
 Domain, Set and Rule classes for fuzzy logic.
 
-Primary abstractions for recursive functions and arrays, 
+Primary abstractions for recursive functions and arrays,
 adding logical operaitons for easier handling.
 """
 
 from logging import warn
+from typing import Callable
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -53,7 +54,14 @@ class Domain:
 
     __slots__ = ["_name", "_low", "_high", "_res", "_sets"]
 
-    def __init__(self, name: str, low: float, high: float, res=float | int, sets: dict = None):
+    def __init__(
+        self,
+        name: str,
+        low: float,
+        high: float,
+        res: float | int = 1,
+        sets: dict | None = None,
+    ) -> None:
         """Define a domain."""
         assert low < high, "higher bound must be greater than lower."
         assert res > 0, "resolution can't be negative or zero"
@@ -101,7 +109,7 @@ class Domain:
         return id(self)
 
     def __getattr__(self, name):
-        """Get the value of an attribute. Is called after __getattribute__ is called with an AttributeError."""
+        """Get the value of an attribute. Called after __getattribute__ is called with an AttributeError."""
         if name in self._sets:
             return self._sets[name]
         else:
@@ -128,7 +136,9 @@ class Domain:
         if name in self._sets:
             del self._sets[name]
         else:
-            raise FuzzyWarning("Trying to delete a regular attr, this needs extra care.")
+            raise FuzzyWarning(
+                "Trying to delete a regular attr, this needs extra care."
+            )
 
     @property
     def range(self):
@@ -176,7 +186,7 @@ class Set:
     Note that most checks are merely assertions that can be optimized away.
     DO NOT RELY on these checks and use tests to make sure that only valid calls are made.
 
-    This class uses the classical MIN/MAX operators for AND/OR. To use different operators, simply subclass and
+    This class uses the classical MIN/MAX operators for AND/OR. To use different operators, simply subclass &
     replace the __and__ and __or__ functions. However, be careful not to mix the classes logically,
     since it might be confusing which operator will be used (left/right binding).
 
@@ -185,7 +195,7 @@ class Set:
     name = None  # these are set on assignment to the domain! DO NOT MODIFY
     domain = None
 
-    def __init__(self, func: callable, *, name=None, domain=None):
+    def __init__(self, func: Callable, *, name=None, domain=None):
         self.func = func
         self.domain = domain
         self.name = name
@@ -294,7 +304,7 @@ class Set:
         if len(self) == 0:
             # this is highly unlikely and only possible with res=inf but still..
             raise FuzzyWarning("The domain has no element.")
-        return self.cardinality() / len(self)
+        return self.cardinality / len(self)
 
     def concentrated(self):
         """
@@ -377,10 +387,12 @@ class Set:
 
     def __str__(self):
         """Return a string for print()."""
-        if self.name is None and self.domain is None:
+        if self.domain is not None:
+            return f"{self.domain._name}.{self.name}"
+        if self.name is None:
             return f"dangling Set({self.func})"
         else:
-            return f"{self.domain._name}.{self.name}"
+            return f"dangling Set({self.name}"
 
     def normalized(self):
         """Return a set that is normalized *for this domain* with 1 as max."""
@@ -398,7 +410,7 @@ class Rule:
     """
 
     def __init__(self, conditions, func=None):
-        self.conditions = {frozenset(C): O for C, O, in conditions.items()}
+        self.conditions = {frozenset(C): oth for C, oth, in conditions.items()}
         self.func = func
 
     def __add__(self, other):
@@ -429,12 +441,16 @@ class Rule:
         assert len(args) == max(
             len(c) for c in self.conditions.keys()
         ), "Number of values must correspond to the number of domains defined as conditions!"
-        assert isinstance(args, dict), "Please make sure to pass in the values as a dictionary."
+        assert isinstance(
+            args, dict
+        ), "Please make sure to pass in the values as a dictionary."
         if method == "cog":
             assert (
                 len({C.domain for C in self.conditions.values()}) == 1
             ), "For CoG, all conditions must have the same target domain."
-            actual_values = {f: f(args[f.domain]) for S in self.conditions.keys() for f in S}
+            actual_values = {
+                f: f(args[f.domain]) for S in self.conditions.keys() for f in S
+            }
 
             weights = []
             for K, v in self.conditions.items():
@@ -445,7 +461,9 @@ class Rule:
             if not weights:
                 return None
             target_domain = list(self.conditions.values())[0].domain
-            index = sum(v.center_of_gravity * x for v, x in weights) / sum(x for v, x in weights)
+            index = sum(v.center_of_gravity * x for v, x in weights) / sum(
+                x for v, x in weights
+            )
             return (target_domain._high - target_domain._low) / len(
                 target_domain.range
             ) * index + target_domain._low
@@ -464,15 +482,19 @@ def rule_from_table(table: str, references: dict):
     """
     import io
     from itertools import product
+    from typing import Any
 
     import pandas as pd
 
     df = pd.read_table(io.StringIO(table), delim_whitespace=True)
-    D = {}
-    for x, y in product(range(len(df.index)), range(len(df.columns))):
-        D[(eval(df.index[x].strip(), references), eval(df.columns[y].strip(), references))] = eval(
-            df.iloc[x, y], references
-        )
+
+    D: dict[tuple[Any, Any], Any] = {
+        (
+            eval(df.index[x].strip(), references),
+            eval(df.columns[y].strip(), references),
+        ): eval(df.iloc[x, y], references)
+        for x, y in product(range(len(df.index)), range(len(df.columns)))
+    }
     return Rule(D)
 
 

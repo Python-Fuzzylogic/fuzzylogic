@@ -2,7 +2,7 @@
 
 from math import isinf
 
-from .classes import Domain, Set
+from .classes import Domain
 
 
 def round_partial(value, res):
@@ -62,7 +62,7 @@ def rescale(out_min, out_max, *, in_min=0, in_max=1):
     return f
 
 
-def weighted_sum(*, weights: dict, target_d: Domain) -> float:
+def weighted_sum(*, weights: dict, target_d: Domain):
     """Used for weighted decision trees and such.
 
     Parametrize with dict of factorname -> weight and domain of results.
@@ -73,7 +73,7 @@ def weighted_sum(*, weights: dict, target_d: Domain) -> float:
     set(factors.names) <= set(weights.names) - in other words:
     there MUST be at least as many items in weights as factors.
     """
-    assert sum(w for w in weights.values()) == 1
+    assert sum(weights.values()) == 1, breakpoint()
 
     rsc = rescale(target_d._low, target_d._high)
 
