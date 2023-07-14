@@ -209,6 +209,24 @@ def linear(m: float = 0, b: float = 0) -> Callable:
     return f
 
 
+def step(x, /, *, no_m=0, c_m=1):
+    """A step function.
+
+    >>> f = step(2)
+    >>> f(1)
+    0
+    >>> f(2)
+    1
+    """
+    assert 0 <= no_m < c_m <= 1
+
+    @njit
+    def f(x):
+        return c_m if x >= x else no_m
+
+    return f
+
+
 def bounded_linear(
     low: float, high: float, *, c_m: float = 1, no_m: float = 0, inverse=False
 ):
