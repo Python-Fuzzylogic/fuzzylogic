@@ -35,7 +35,10 @@ from typing import Optional
 try:
     from numba import njit
 except ImportError:
-    njit = lambda func: func  # noqa: E731
+
+    def njit(func):
+        return func
+
 
 #####################
 # SPECIAL FUNCTIONS #
@@ -50,7 +53,6 @@ def inv(g: Callable) -> Callable:
     with contextlib.suppress(TypeError):
         g = njit(g)
 
-    @njit
     def f(x):
         return 1 - g(x)
 
@@ -63,7 +65,6 @@ def noop() -> Callable:
     Useful for testing.
     """
 
-    @njit
     def f(x):
         return x
 
@@ -79,7 +80,6 @@ def constant(c: float) -> Callable:
     1
     """
 
-    @njit
     def f(_):
         return c
 
@@ -109,7 +109,6 @@ def alpha(
         func = njit(func)
     # assert 0 <= floor_clip <= ceiling_clip <= 1, "%s <= %s"%(floor_clip, ceiling_clip)
 
-    @njit
     def f(x):
         m = func(x)
         if m >= ceiling:
@@ -129,7 +128,6 @@ def normalize(height, func):
     with contextlib.suppress(TypeError):
         func = njit(func)
 
-    @njit
     def f(x):
         return func(x) / height
 
@@ -145,7 +143,6 @@ def moderate(func):
     with contextlib.suppress(TypeError):
         func = njit(func)
 
-    @njit
     def f(x):
         return 1 / 2 + 4 * (func(x) - 1 / 2) ** 3
 
@@ -168,7 +165,6 @@ def singleton(p, *, no_m=0, c_m=1):
     """
     assert 0 <= no_m < c_m <= 1
 
-    @njit
     def f(x):
         return c_m if x == p else no_m
 
@@ -196,7 +192,6 @@ def linear(m: float = 0, b: float = 0) -> Callable:
     1
     """
 
-    @njit
     def f(x) -> float:
         y = m * x + b
         if y <= 0:
@@ -220,7 +215,6 @@ def step(x, /, *, no_m=0, c_m=1):
     """
     assert 0 <= no_m < c_m <= 1
 
-    @njit
     def f(x):
         return c_m if x >= x else no_m
 
@@ -263,14 +257,12 @@ def bounded_linear(
 
     # special cases found by hypothesis
 
-    @njit
     def g_0(_):
         return (c_m + no_m) / 2
 
     if gradient == 0:
         return g_0
 
-    @njit
     def g_inf(x):
         asymptode = (high + low) / 2
         if x < asymptode:
@@ -283,7 +275,6 @@ def bounded_linear(
     if isinf(gradient):
         return g_inf
 
-    @njit
     def f(x):
         y = gradient * (x - low) + no_m
         if y < 0:
@@ -301,7 +292,6 @@ def R(low, high):
     """
     assert low < high, f"{low} >? {high}"
 
-    @njit
     def f(x):
         if x < low or isinf(high - low):
             return 0
@@ -366,7 +356,6 @@ def triangular(low, high, *, c=None, c_m=1, no_m=0):
     left_slope = bounded_linear(low, c, no_m=0, c_m=c_m)
     right_slope = inv(bounded_linear(c, high, no_m=0, c_m=c_m))
 
-    @njit
     def f(x):
         return left_slope(x) if x <= c else right_slope(x)
 
@@ -414,7 +403,6 @@ def sigmoid(L, k, x0):
     # need to be really careful here, otherwise we end up in nanland
     assert 0 < L <= 1, "L invalid."
 
-    @njit
     def f(x):
         if isnan(k * x):
             # e^(0*inf) = 1
@@ -429,7 +417,6 @@ def sigmoid(L, k, x0):
     return f
 
 
-@njit
 def bounded_sigmoid(low, high, inverse=False):
     """
     Calculate a weight based on the sigmoid function.
@@ -514,7 +501,6 @@ def bounded_exponential(k=0.1, limit=1):
     assert limit > 0
     assert k > 0
 
-    @njit
     def f(x):
         try:
             return limit - limit / exp(k * x)
@@ -543,7 +529,6 @@ def simple_sigmoid(k=0.229756):
     0.99
     """
 
-    @njit
     def f(x):
         if isinf(x) and k == 0:
             return 1 / 2
@@ -573,7 +558,6 @@ def triangular_sigmoid(low, high, c=None):
     left_slope = bounded_sigmoid(low, c)
     right_slope = inv(bounded_sigmoid(c, high))
 
-    @njit
     def f(x):
         return left_slope(x) if x <= c else right_slope(x)
 
@@ -597,7 +581,6 @@ def gauss(c, b, *, c_m=1):
     assert 0 < c_m <= 1
     assert 0 < b, "b must be greater than 0"
 
-    @njit
     def f(x):
         try:
             o = (x - c) ** 2

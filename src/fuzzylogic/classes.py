@@ -490,9 +490,9 @@ def rule_from_table(table: str, references: dict):
 
     D: dict[tuple[Any, Any], Any] = {
         (
-            eval(df.index[x].strip(), references),
-            eval(df.columns[y].strip(), references),
-        ): eval(df.iloc[x, y], references)
+            eval(df.index[x].strip(), references),  # type: ignore
+            eval(df.columns[y].strip(), references),  # type: ignore
+        ): eval(df.iloc[x, y], references)  # type: ignore
         for x, y in product(range(len(df.index)), range(len(df.columns)))
     }
     return Rule(D)
