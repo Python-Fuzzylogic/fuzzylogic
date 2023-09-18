@@ -32,6 +32,8 @@ from collections.abc import Callable
 from math import exp, isinf, isnan, log
 from typing import Optional
 
+
+
 try:
     from numba import njit
 except ImportError:
@@ -204,7 +206,7 @@ def linear(m: float = 0, b: float = 0) -> Callable:
     return f
 
 
-def step(x, /, *, no_m=0, c_m=1):
+def step(limit, /, *, left=0, right=1):
     """A step function.
 
     >>> f = step(2)
@@ -213,10 +215,10 @@ def step(x, /, *, no_m=0, c_m=1):
     >>> f(2)
     1
     """
-    assert 0 <= no_m < c_m <= 1
+    assert 0 <= left <= 1 and 0 <= right <= 1
 
     def f(x):
-        return c_m if x >= x else no_m
+        return left if x < limit else right
 
     return f
 

@@ -186,7 +186,7 @@ def lambda_op(h):
     """
     assert 0 <= h <= 1, breakpoint()
 
-# sourcery skip: use-function-docstrings
+    # sourcery skip: use-function-docstrings
     def E(*guncs):
         funcs = list(guncs)
 
@@ -228,7 +228,7 @@ def gamma_op(g):
     return E
 
 
-def simple_disjoint_sum(*guncs):
+def simple_disjoint_sum(*funcs):  # sourcery skip: unwrap-iterable-construction
     """Simple fuzzy XOR operation.
     Someone fancy a math proof?
 
@@ -261,15 +261,12 @@ def simple_disjoint_sum(*guncs):
     (A AND ~B AND ~C) OR (B AND ~A AND ~C) OR (C AND ~B AND ~A)
     max(min(0,0.5,0), min(0.5,1,0), min(1,0.5,1)) == 0.5
     """
-
-    funcs = list(guncs)
-
     def F(z):
         # Reminder how it works for 2 args
         # x, y = a(z), b(z)
         # return max(min(x, 1-y), min(1-x, y))
 
-        M = {
+        M:set[float] = {
             f(z) for f in funcs
         }  # a set of all membership values over all given functions to be iterated over
         # we need to go over each value in the set, calc min(x, inverse(rest)), from that calc max

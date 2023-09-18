@@ -30,7 +30,8 @@ exclude = [
     "dist",
     "node_modules",
     "venv",
-    "src/ui"
+    "src/ui",
+    "box",
 ]
 
 # Same as Black.
