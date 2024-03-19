@@ -486,7 +486,7 @@ def rule_from_table(table: str, references: dict):
 
     import pandas as pd
 
-    df = pd.read_table(io.StringIO(table), delim_whitespace=True)
+    df = pd.read_table(io.StringIO(table), sep='\s+')
 
     D: dict[tuple[Any, Any], Any] = {
         (
