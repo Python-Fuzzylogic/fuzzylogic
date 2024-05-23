@@ -55,10 +55,10 @@ class Domain:
     def __init__(
         self,
         name: str,
-        low: float,
-        high: float,
-        res: float | int = 1,
-        sets: dict | None = None,
+        low: float|int,
+        high: float|int,
+        res: float|int = 1,
+        sets: dict|None = None,
     ) -> None:
         """Define a domain."""
         assert low < high, "higher bound must be greater than lower."
