@@ -1,6 +1,6 @@
 {
     "python.testing.pytestArgs": [
-        "."
+        "fuzzylogic"
     ],
     "python.testing.unittestEnabled": false,
     "python.testing.pytestEnabled": true,
@@ -10,5 +10,6 @@
         ".",
         "-p",
         "test_*.py"
-    ]
+    ],
+    "python.analysis.typeCheckingMode": "basic"
 }
