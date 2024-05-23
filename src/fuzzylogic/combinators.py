@@ -38,10 +38,12 @@ and combines these membership-values via the inner op function, reducing it all 
 from collections.abc import Callable
 from functools import reduce
 
+from fuzzylogic.functions import noop  # noqa
 from numpy import multiply
 
 try:
-    from numba import njit
+    raise ImportError
+    # from numba import njit # still not ready for prime time :(
 except ImportError:
 
     def njit(func):

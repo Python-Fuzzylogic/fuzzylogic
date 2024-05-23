@@ -32,10 +32,10 @@ from collections.abc import Callable
 from math import exp, isinf, isnan, log
 from typing import Optional
 
-
-
 try:
-    from numba import njit
+    raise ImportError
+    # from numba import njit # still not ready for prime time :(
+
 except ImportError:
 
     def njit(func):
@@ -206,19 +206,29 @@ def linear(m: float = 0, b: float = 0) -> Callable:
     return f
 
 
-def step(limit, /, *, left=0, right=1):
+def step(limit:float|int, /, *, left:float|int=0, right:float|int=1, at_lmt:None|float|int=None) -> Callable:
     """A step function.
 
+    Coming from left, the function returns the *left* argument.
+    At the limit, it returns *at_lmt* or the average of left and right.
+    After the limit, it returns the *right* argument.
     >>> f = step(2)
     >>> f(1)
     0
     >>> f(2)
+    0.5
+    >>> f(3)
     1
     """
     assert 0 <= left <= 1 and 0 <= right <= 1
 
-    def f(x):
-        return left if x < limit else right
+    def f(x:float|int) -> float|int:
+        if x < limit:
+            return left
+        elif x > limit:
+            return right
+        else:
+            return at_lmt if at_lmt is not None else (left + right)/2
 
     return f
 

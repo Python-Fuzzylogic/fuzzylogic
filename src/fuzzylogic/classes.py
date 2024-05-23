@@ -5,7 +5,6 @@ Primary abstractions for recursive functions and arrays,
 adding logical operaitons for easier handling.
 """
 
-from logging import warn
 from typing import Callable
 
 import matplotlib.pyplot as plt
@@ -17,7 +16,6 @@ from .functions import inv, normalize
 
 class FuzzyWarning(UserWarning):
     """Extra Exception so that user code can filter exceptions specific to this lib."""
-
     pass
 
 
@@ -71,19 +69,11 @@ class Domain:
         self._res = res
         self._sets = {} if sets is None else sets  # Name: Set(Function())
 
-    def __call__(self, X):
+    def __call__(self, x):
         """Pass a value to all sets of the domain and return a dict with results."""
-        if isinstance(X, np.ndarray):
-            if any(not (self._low <= x <= self._high) for x in X):
-                raise FuzzyWarning("Value in array is outside of defined range!")
-            res = {}
-            for s in self._sets.values():
-                vector = np.vectorize(s.func, otypes=[float])
-                res[s] = vector(X)
-            return res
-        if not (self._low <= X <= self._high):
-            warn(f"{X} is outside of domain!")
-        return {s: s.func(X) for name, s in self._sets.items()}
+        if not (self._low <= x <= self._high):
+            raise FuzzyWarning(f"{x} is outside of domain!")
+        return {name: s.func(x) for name, s in self._sets.items()}
 
     def __str__(self):
         """Return a string to print()."""
@@ -195,7 +185,7 @@ class Set:
     name = None  # these are set on assignment to the domain! DO NOT MODIFY
     domain = None
 
-    def __init__(self, func: Callable, *, name=None, domain=None):
+    def __init__(self, func: Callable, *, name:str|None=None, domain:Domain|None=None):
         self.func = func
         self.domain = domain
         self.name = name
@@ -334,7 +324,7 @@ class Set:
 
     def multiplied(self, n):
         """Multiply with a constant factor, changing all membership values."""
-        return Set(lambda x: self.func(x) * n, domain=self)
+        return Set(lambda x: self.func(x) * n, domain=self.domain)
 
     def plot(self):
         """Graph the set in the given domain."""
@@ -350,18 +340,17 @@ class Set:
             raise FuzzyWarning("No domain assigned.")
         return np.fromiter((self.func(x) for x in self.domain.range), float)
 
-    @property
     def center_of_gravity(self):
         """Return the center of gravity for this distribution, within the given domain."""
-        if self.__center_of_gravity is not None:
-            return self.__center_of_gravity
 
+        assert self.domain is not None, "No center of gravity with no domain."
         weights = self.array()
         if sum(weights) == 0:
             return 0
-        cog = np.average(np.arange(len(weights)), weights=weights)
+        cog = np.average(self.domain.range, weights=weights)
         self.__center_of_gravity = cog
         return cog
+
 
     def __repr__(self):
         """
@@ -410,6 +399,7 @@ class Rule:
     """
 
     def __init__(self, conditions, func=None):
+        print("ohalala")
         self.conditions = {frozenset(C): oth for C, oth, in conditions.items()}
         self.func = func
 
@@ -444,30 +434,43 @@ class Rule:
         assert isinstance(
             args, dict
         ), "Please make sure to pass in the values as a dictionary."
-        if method == "cog":
-            assert (
-                len({C.domain for C in self.conditions.values()}) == 1
-            ), "For CoG, all conditions must have the same target domain."
-            actual_values = {
-                f: f(args[f.domain]) for S in self.conditions.keys() for f in S
-            }
+        match method:
+            case "cog":
+                assert (
+                    len({C.domain for C in self.conditions.values()}) == 1
+                ), "For CoG, all conditions must have the same target domain."
+                actual_values = {
+                    f: f(args[f.domain]) for S in self.conditions.keys() for f in S
+                }
 
-            weights = []
-            for K, v in self.conditions.items():
-                x = min((actual_values[k] for k in K if k in actual_values), default=0)
-                if x > 0:
-                    weights.append((v, x))
+                weights = []
+                for K, v in self.conditions.items():
+                    x = min((actual_values[k] for k in K if k in actual_values), default=0)
+                    if x > 0:
+                        weights.append((v, x))
 
-            if not weights:
-                return None
-            target_domain = list(self.conditions.values())[0].domain
-            index = sum(v.center_of_gravity * x for v, x in weights) / sum(
-                x for v, x in weights
-            )
-            return (target_domain._high - target_domain._low) / len(
-                target_domain.range
-            ) * index + target_domain._low
+                if not weights:
+                    return None
+                target_domain = list(self.conditions.values())[0].domain
+                index = sum(v.center_of_gravity * x for v, x in weights) / sum(
+                    x for v, x in weights
+                )
+                return (target_domain._high - target_domain._low) / len(
+                    target_domain.range
+                ) * index + target_domain._low
 
+            case "centroid":
+                raise NotImplementedError("Centroid method not implemented yet.")
+            case "bisector":
+                raise NotImplementedError("Bisector method not implemented yet.")
+            case "mom":
+                raise NotImplementedError("Middle of max method not implemented yet.")
+            case "som":
+                raise NotImplementedError("Smallest of max method not implemented yet.")
+            case  "lom":
+                raise NotImplementedError("Largest of max method not implemented yet.")
+            case _:
+                raise ValueError("Invalid method.")
 
 def rule_from_table(table: str, references: dict):
     """Turn a (2D) string table into a Rule of fuzzy sets.
