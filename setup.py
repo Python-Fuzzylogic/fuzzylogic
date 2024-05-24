@@ -9,41 +9,40 @@ src = os.path.join(here, "src/fuzzylogic")
 sys.path.append(src)
 
 
-meta = {
-    "name": "fuzzylogic",
-    "description": "Fuzzy Logic for Python 3",
-    "license": "MIT",
-    "url": "https://github.com/amogorkon/fuzzylogic",
-    "version": "1.3.0",
-    "author": "Anselm Kiefner",
-    "author_email": "fuzzylogic-pypi@anselm.kiefner.de",
-    "python_requires": ">=3.10",
-    "keywords": [
-        "fuzzy logic",
-    ],
-    "classifiers": [
-        "Development Status :: 4 - Beta",
-        "Intended Audience :: Developers",
-        "Intended Audience :: Education",
-        "Intended Audience :: Manufacturing",
-        "Intended Audience :: Science/Research",
-        "Natural Language :: English",
-        "License :: OSI Approved :: MIT License",
-        "Operating System :: OS Independent",
-        "Programming Language :: Python :: 3 :: Only",
-        "Topic :: Scientific/Engineering :: Artificial Intelligence",
-        "Topic :: Scientific/Engineering :: Mathematics",
-        "Topic :: Scientific/Engineering :: Information Analysis",
-    ],
-}
+__license__ = "MIT"
+__version__ = "1.4.0"
+__author__ = "Anselm Kiefner"
+__contact__ = "fuzzylogic-pypi@anselm.kiefner.de"
 
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Education",
+    "Intended Audience :: Manufacturing",
+    "Intended Audience :: Science/Research",
+    "Natural Language :: English",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3 :: Only",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+    "Topic :: Scientific/Engineering :: Mathematics",
+    "Topic :: Scientific/Engineering :: Information Analysis",
+]
 
-LONG_DESCRIPTION = pathlib.Path("README.md").read_text()
 setup(
     packages=find_packages(where="src"),
     package_dir={"": "src"},
-    long_description=LONG_DESCRIPTION,
+    long_description=pathlib.Path("README.md").read_text(),
     long_description_content_type="text/markdown",
     zip_safe=False,
-    **meta
+    name="fuzzylogic",
+    description="Fuzzy Logic for Python 3",
+    license=__license__,
+    url="https://github.com/amogorkon/fuzzylogic",
+    version=__version__,
+    author=__author__,
+    author_email=__contact__,
+    python_requires=">=3.12",
+    keywords="fuzzy logic",
+    classifiers=classifiers,
 )
