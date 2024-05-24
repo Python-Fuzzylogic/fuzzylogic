@@ -16,6 +16,7 @@ from .functions import inv, normalize
 
 class FuzzyWarning(UserWarning):
     """Extra Exception so that user code can filter exceptions specific to this lib."""
+
     pass
 
 
@@ -55,10 +56,10 @@ class Domain:
     def __init__(
         self,
         name: str,
-        low: float|int,
-        high: float|int,
-        res: float|int = 1,
-        sets: dict|None = None,
+        low: float | int,
+        high: float | int,
+        res: float | int = 1,
+        sets: dict | None = None,
     ) -> None:
         """Define a domain."""
         assert low < high, "higher bound must be greater than lower."
@@ -126,9 +127,7 @@ class Domain:
         if name in self._sets:
             del self._sets[name]
         else:
-            raise FuzzyWarning(
-                "Trying to delete a regular attr, this needs extra care."
-            )
+            raise FuzzyWarning("Trying to delete a regular attr, this needs extra care.")
 
     @property
     def range(self):
@@ -142,9 +141,7 @@ class Domain:
         if int(self._res) == self._res:
             return np.arange(self._low, self._high + self._res, int(self._res))
         else:
-            return np.linspace(
-                self._low, self._high, int((self._high - self._low) / self._res) + 1
-            )
+            return np.linspace(self._low, self._high, int((self._high - self._low) / self._res) + 1)
 
     def min(self, x):
         """Standard way to get the min over all membership funcs.
@@ -153,11 +150,11 @@ class Domain:
         to calculate all results, construct a dict, unpack the dict
         and calculate the min from that.
         """
-        return min(f(x) for f in self._sets.values())
+        return min((f(x) for f in self._sets.values()), default=0)
 
     def max(self, x):
         """Standard way to get the max over all membership funcs."""
-        return max(f(x) for f in self._sets.values())
+        return max((f(x) for f in self._sets.values()), default=0)
 
 
 class Set:
@@ -185,7 +182,7 @@ class Set:
     name = None  # these are set on assignment to the domain! DO NOT MODIFY
     domain = None
 
-    def __init__(self, func: Callable, *, name:str|None=None, domain:Domain|None=None):
+    def __init__(self, func: Callable, *, name: str | None = None, domain: Domain | None = None):
         self.func = func
         self.domain = domain
         self.name = name
@@ -351,7 +348,6 @@ class Set:
         self.__center_of_gravity = cog
         return cog
 
-
     def __repr__(self):
         """
         Return a string representation of the Set that reconstructs the set with eval().
@@ -400,7 +396,7 @@ class Rule:
 
     def __init__(self, conditions, func=None):
         print("ohalala")
-        self.conditions = {frozenset(C): oth for C, oth, in conditions.items()}
+        self.conditions = {frozenset(C): oth for C, oth in conditions.items()}
         self.func = func
 
     def __add__(self, other):
@@ -431,17 +427,13 @@ class Rule:
         assert len(args) == max(
             len(c) for c in self.conditions.keys()
         ), "Number of values must correspond to the number of domains defined as conditions!"
-        assert isinstance(
-            args, dict
-        ), "Please make sure to pass in the values as a dictionary."
+        assert isinstance(args, dict), "Please make sure to pass in the values as a dictionary."
         match method:
             case "cog":
                 assert (
                     len({C.domain for C in self.conditions.values()}) == 1
                 ), "For CoG, all conditions must have the same target domain."
-                actual_values = {
-                    f: f(args[f.domain]) for S in self.conditions.keys() for f in S
-                }
+                actual_values = {f: f(args[f.domain]) for S in self.conditions.keys() for f in S}
 
                 weights = []
                 for K, v in self.conditions.items():
@@ -452,9 +444,7 @@ class Rule:
                 if not weights:
                     return None
                 target_domain = list(self.conditions.values())[0].domain
-                index = sum(v.center_of_gravity * x for v, x in weights) / sum(
-                    x for v, x in weights
-                )
+                index = sum(v.center_of_gravity * x for v, x in weights) / sum(x for v, x in weights)
                 return (target_domain._high - target_domain._low) / len(
                     target_domain.range
                 ) * index + target_domain._low
@@ -467,10 +457,11 @@ class Rule:
                 raise NotImplementedError("Middle of max method not implemented yet.")
             case "som":
                 raise NotImplementedError("Smallest of max method not implemented yet.")
-            case  "lom":
+            case "lom":
                 raise NotImplementedError("Largest of max method not implemented yet.")
             case _:
                 raise ValueError("Invalid method.")
+
 
 def rule_from_table(table: str, references: dict):
     """Turn a (2D) string table into a Rule of fuzzy sets.
@@ -489,7 +480,7 @@ def rule_from_table(table: str, references: dict):
 
     import pandas as pd
 
-    df = pd.read_table(io.StringIO(table), sep='\s+')
+    df = pd.read_table(io.StringIO(table), sep=r"\s+")
 
     D: dict[tuple[Any, Any], Any] = {
         (
