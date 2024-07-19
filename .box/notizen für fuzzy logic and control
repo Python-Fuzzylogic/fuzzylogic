@@ -1,0 +1,296 @@
+core - da wo 1 ist
+boundaries - überall wo nicht 1 und nicht 0
+support - überall wo nicht 0
+
+schreibweise für fuzzy sets:
+    A = µ1 / u1 + µ2 / u2 + µ3 / u3
+    oben stehen die membership values, unten die werte; + ist funktions-theoretische vereinigung
+
+vereinigung von zwei konvexen megen -> konvexe menge
+"normal fuzzy set" := fuzzy set mit mindestens einem element mit µ = 1
+bei fuzzy sets mit exakt einem element mit µ = 1 heißt dieses element "prototype"
+
+eine funktion die von einer menge A auf eine menge B abbildet:
+f(A) = f(µ1/ u1 + µ2 / u2 + µ3 + u3) = µ1 / f(u1) + µ2 / f(u2) + µ3 / f(u3)
+(erweiterungsprinzip nach zadeh & yager)
+
+wenn man zwei universen auf eines abbilden will funktioniert das kartesisch:
+U1 x U2 -> V
+hier ist A ein fuzzy set das über den universen U1 und U2 definiert ist:
+f(A) = {min(µ1(i), µ1(j) / f(i,j) \ i element of U1, j element of U2}
+where (µ1(i) and (µ2(j) are the separable membership projections of µ(ij) from the
+Cartesian space Ui x U2 when ji(i j) can not be determined. 
+- dazu gilt analog zur wahrscheinlichkeitstheorie die bedingung der
+"non-interaktion" ("unabhängigkeit" in der wahrscheinlichkeitstheorie)
+in FL wird min() statt prod() verwendet
+
+beispiel:
+U1 = U2 = {1,2,..9,10}
+A(auf U1) = 0.6/1 + 1/2 + 0.8/3
+B(auf U2) = 0.8/5 + 1/6 + 0.7/7
+V = {5,6,..,18,12}
+A x B = (0.6/1 + 1/2 + 0.8/3)x (0.8/5 + 1/6 + 0.7/7)
+= min(0.6,0.8)/5 + min(0.6,1)/6 + ... + min(0.8,1)/18 + min(0.8, 0.7)/21
+= 0.6/5 + 0.6/6 + 0.6/7 + 0.8/10 + 1/12 + 0.7/14 + 0.8/15 + 0.8/18 + 0.7/21
+
+falls es zwei oder mehr wege gibt eine zahl zu produzieren wird zuerst
+min() und dann max() angewandt:
+a = 0.2/1 + 1/2 + 0.7/4
+b = 0.5/1 + 1/2
+
+a*b = min(0.2,0.5)/1 + max(min(0.2,1)), min(0.5, 1))/2 + max(min(0.7,0.5, min(1,1))/4, min(0.7,1)/8
+= 0.2/1 + 0.5/2 + 1/4 + 0.7/8
+
+v = binary OR, u (rundes v) = set UNION
+/\ = binary AND, rundes /\ = set INTERSECTION
+
+union (OR): max..
+intersection (AND): min..
+complement: 1- ..
+containment: R contains S <=> µR(x,y) <= µS(x,y)
+identity: {} -> 0 and X -> E
+
+composition (abbildung X -> Y -> Z ~ X -> Z) ~ "defuzzifizierung":
+max-min:
+T = R o S
+*das OR und AND stimmen so - obwohl es max-min heißt*
+µT(x,z) = OR(µR(x,y) AND µS(y,z) for y element of Y)
+
+max-prod (manchmal auch max-dot):
+T = R o S
+µT(x,z) = OR(µR(x,y) * µS(y,z) for y element of Y)
+
+beispiel:
+(R= x zeilen, y spalten)
+R = [
+    [1,0,1,0],
+    [0,0,0,1],
+    [0,0,0,0],
+    ]
+(S = y zeilen, z spalten)
+S = [
+    [0,1],
+    [0,0],
+    [0,1],
+    [0,0],
+    ]
+
+T = [
+    [0,1],
+    [0,0],
+    [0,0],
+    ]
+
+dazu muss lediglich multiplikation als min (AND) und
+addition als max (OR) implementiert werden -
+alles andere ist pure matrizenmultiplikation!
+
+[0,1] heißt auch "einheitsinterval" oder "unit interval"
+
+implication:
+P -> Q => x is A then x is B
+T(P -> Q) = T(-P) or Q) = max(T(~P), T(Q))
+P -> Q is: IF x is A THEN y is B
+
+IF x is A THEN y is B ELSE y is C:
+R = (A x B) OR (~A x C)
+
+
+
+u(t) = Kp . e(t)
+for a proportional or P controller;
+u(t) = Kp . e(t) + KI . integral(e(t))dt
+for a proportional plus integral or PI controller;
+u(t) = Kp. e(t) + KD. e'(t)
+for a proportional plus derivative or PD controller;
+u(t) = Kp . e(t) + KI . integral(e(t))dt + KD. e'(t)
+or a proportional plus derivative plus integral or PID controller,
+
+where e(t), e'(t), and integral(e(t))dt are the output error, error derivative, and error integral, respectively;
+
+The problem of control system design is defined as obtaining the generally
+nonlinear function h(.) in the case of nonlinear systems, coefficients Kp, KI, and KD in
+the case of an output-feedback, and coefficients ki, k2,..., and kn, in the case of state-
+feedback policies for linear system models.
+
+i) Large scale systems are decentralized and decomposed into a collection
+of decoupled sub-systems.
+ii) The temporal variations of plant dynamics are assumed to be "slowly
+varying."
+iii) The nonlinear plant dynamics are locally linearized about a set of
+operating points.
+iv) A set of state variables, control variables, or output features are made
+available.
+v) A simple P, PD, PID (output feedback), or state-feedback controller is
+designed for each de coupled system. The controllers are of regulatory
+type and are fast enough to perform satisfactorily under tracking control
+situations. Optimal controllers can also be tried using LQR or LQG
+techniques.
+vi) The first five steps mentioned above introduce uncertainties. There are
+also uncertainties due to external environment. The controller design
+should be made as close as possible to the optimal one based on the
+control engineer's all best available knowledge, in the form of I/O
+numerical observations data, analytic, linguistic, intuitive, and etc.,
+information regarding the plant dynamics and external world.
+vii) A supervisory control system, either automatic or a human expert
+operator, forms an additional feedback control loop to tune and adjust
+the controller's parameters in order to compensate the effects of
+uncertainties and variations due to unmodeled dynamics.
+
+
+Six basic assumptions are commonly made whenever a fuzzy logic-based control policy
+is selected. These assumptions are outlined below:
+i) The plant is observable and controllable: State, input, and output
+variables are available for observation and measurement or
+computation.
+ii) There exists a body of knowledge in the form of expert production
+linguistic rules, engineering common sense, intuition, or an analytic
+model that can be fuzzifled and the rules be extracted.
+iii) A solution exists.
+vi) The control engineer is looking for a good enough solution and not
+necessarily the optimum one.
+v) We desire to design a controller to the best of our available knowledge
+and within an acceptable precision range.
+vi) The problems of stability and optimality are open problems.
+
+A fuzzy production rule system consists of four structures:
+i) A set of rules which represents the policies and heuristic strategies of
+the expert decision-maker.
+ii) A set of input data assessed immediately prior to the actual decision.
+iii) A method for evaluating any proposed action in terms of its conformity
+to the expressed rules, given the available data,
+iv) A method for generating promising actions and for determining when to
+stop searching for better ones.
+
+A fuzzy production rule system consists of four structures:
+i) A set of rules which represents the policies and heuristic strategies of
+the expert decision-maker.
+ii) A set of input data assessed immediately prior to the actual decision.
+iii) A method for evaluating any proposed action in terms of its conformity
+to the expressed rules, given the available data,
+iv) A method for generating promising actions and for determining when to
+stop searching for better ones.
+
+In general, a value of a linguistic variable is a composite term which is a concatenation of
+atomic terms. These atomic terms may be divided into four categories:
+i) primary terms which are labels of specified fuzzy subsets of the
+universe of discourse (e.g., hot, cold, hard, lower, etc., in the preceding
+example).
+ii) The negation NOT and connectives "AND" and "OR."
+iii) Hedges, such as "very," "much," "slightly," "more or less," etc.
+iv) Markers, such as parentheses.
+
+IF A THEN B entspricht:
+# Zadeh's implication oder classic implication 
+# falls µB(y) < µA(x) wird (44) zu (45) reduziert
+(44) µ(x,y) = max(min(µA(x), µB(y)), 1- µA(x))
+(45) µ(x,y) = max((µB(y), (1 - µA(x)))
+
+# correlation-minimum oder Mamdani's implication 
+# wird auch für das fuzzy-kreuzprodukt verwendet
+# falls µA(x) >=0.5 und µB(y) >=0.5 
+# wird Zadeh's implication zu Mamdani's implication reduziert
+(46) µ(x,y) = min(µA(x), µB(y))
+
+# Luckawics implication
+(47) µ(x,y) = min(1, (1 - µA(x) + µB(y)))
+
+# bounded sum implication
+(48) µ(x,y) = min(1, (µA(x) + µB(y)))
+
+(49) µ(x,y) = min(1, [µB(y) / µA(x)])
+
+# eine form des correlation-product (hebbian networks: conditioning)
+# vom Author bevorzugt
+(50) µ(x,y) = max(µA(x) * µB(y), (1 - µA(x)))
+
+# eine form des correlation-product (hebbian networks: reinforcement)
+(51) µ(x,y) = µA(x) * µB(y)
+
+(52) µ(x,y) = (µB(y))**µA(x)
+
+# Gödel's implication oder "alpha" implication
+(53) µ(x,y) = {µB(y) for µB(y) < µA(x); 1 otherwise}
+
+Methods for composition of fuzzy relations:
+I. Max-Min composition
+yk = x • Rk
+µ(y) = max(min(µ(x), µR(x, y) for x in X)
+
+II. Max-Prod composition
+yk = x * Rk
+µ(y) = max(µ(x) • µ(x, y) for x in X)
+
+III. Min-Max composition
+yk = x † Rk
+µ(y) = min(max(µ(x), µ(x,y) for x in X))
+
+IV. Max-Max composition
+yk = x o Rk
+µ(y) = max(max(µ(x), µ(x,y)) for x in X)
+
+V. Min-Min composition
+µk = x ¤ Rk
+µ(y) = min(min(µ(x), µ(x, y) for x in X))
+
+VI. (p, q) composition
+µk = x ºpq Rk
+µ(y) = max_p(min_q(µ(x), µ(x,y)))
+where max_p a(x) = inf.(x) for x in X
+{1, [[a(x1)]**p + [a[(x2)**p + ... + a(xn)**p)*1/p}
+and
+min_q [a(x), b(x)] = 1 - min((1,(1 - a(x))**q + (1 - b(x))**q)*1/q)
+
+VII. Sum-Prod composition
+yk = x x Rk
+µ(y) = f(sum(µ(x) * µ(x,y)))
+where f(*) is a logistic function that limits the 
+value of the function within the unit interval
+mainly used in ANN for mapping between parallel layers
+in a multi-layer network.
+
+VIII. Max-Ave composition
+yk = x * av.Rk
+µ(y) = 1/2*max(µ(x) + µ(x,y) for x in X)
+
+
+# Fuzzy Control (page 175)
+# A Fuzzy Two-Axis Mirror Controller for Laser Beam Alignment
+
+#VAR Error
+#TYPE signed byte /* C type of'signed char' */
+#MIN -128 /* universe of discourse min */
+#MAX 127 /* universe of discourse max */
+#/* Membership functions for Error (ZE, PS, NS, PM, NM). */
+#MEMBER ZE
+#POINTS -20 0 0 1 20 0
+#END
+#VAR dError
+#TYPE signed byte
+#MIN-100
+#*/
+#MAX 100
+#*/    /* C type of 'signed char' */
+#/* universe of discourse min
+#/* universe of discourse max
+#
+#MEMBER ZE
+#POINTS -30 0 0 1 30 0
+#END
+
+#FUZZY Alignment_rules
+#RULE Rulel
+#IF Error IS PM AND dError IS ZE THEN
+#Speed IS NM
+#END
+# ...
+#/* The following three CONNECT Objects specify that Error
+#* and dError are inputs to the Alignment_rules knowledge base
+#* and Speed output from Alignment_rules.
+#CONNECT
+#FROM Error
+#TO Alignment_rules
+#END
+# ... 
+
+ transformed-viscosity = (integer) (10*logiQ (viscosity) + .5).
