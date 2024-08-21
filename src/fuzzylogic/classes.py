@@ -5,9 +5,18 @@ Primary abstractions for recursive functions and arrays,
 adding logical operaitons for easier handling.
 """
 
-from typing import Callable
+from typing import Callable, Iterable
 
-import matplotlib.pyplot as plt
+try:
+    import matplotlib.pyplot as plt
+except ImportError:
+
+    def plt(*args, **kwargs):
+        raise ImportError(
+            "matplotlib not available. Please re-install with 'pip install fuzzylogic[plotting]'"
+        )
+
+
 import numpy as np
 
 from .combinators import MAX, MIN, bounded_sum, product, simple_disjoint_sum
