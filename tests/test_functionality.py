@@ -1,22 +1,15 @@
 """
-Functional test of the fuzzylogic lib 'fuzzy'.
+Functional tests of the fuzzylogic library.
 """
-
-import os
-import sys
-
-here = os.path.split(os.path.abspath(os.path.dirname(__file__)))
-src = os.path.join(here[0], "src")
-sys.path.insert(0, src)
-print(sys.path)
 
 import unittest
 
+from numpy import array_equal
+from pytest import fixture
+
 from fuzzylogic.classes import Domain, Set
 from fuzzylogic.functions import R, S, bounded_linear
-from fuzzylogic.rules import rescale, weighted_sum
-from numpy import array_equal
-from pytest import fixture, raises
+from fuzzylogic.rules import weighted_sum
 
 
 @fixture
@@ -39,9 +32,7 @@ def simple():
 def test_array(simple):
     assert array_equal(simple.low.array(), [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0])
     assert array_equal(simple.high.array(), [0, 0, 0, 0, 0, 0, 0, 0, 0, 0.5, 1.0])
-    assert (
-        len(simple.low.array()) == 11
-    )  # unlike arrays and lists, upper boundary is INCLUDED
+    assert len(simple.low.array()) == 11  # unlike arrays and lists, upper boundary is INCLUDED
 
 
 def test_value(temp):
