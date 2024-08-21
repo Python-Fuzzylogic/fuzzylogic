@@ -25,10 +25,11 @@ class FuzzyFunction(object):
         return OR(self, other)
 
     def __repr__(self):
-        return '{0}({1})'.format(self.__class__.__name__, self.__dict__)
+        return "{0}({1})".format(self.__class__.__name__, self.__dict__)
 
     def __str__(self):
-        return '{0}({1})'.format(self.__class__.__name__, self.__dict__)
+        return "{0}({1})".format(self.__class__.__name__, self.__dict__)
+
 
 # These basic operators are defined here to avoid an import-loop
 
@@ -83,7 +84,7 @@ class Domain(object):
         """
         # the fuzzysets as attributes
         self.sets = {}
-        assert limits[0] <= limits[1], 'Lower limit > upper limit!'
+        assert limits[0] <= limits[1], "Lower limit > upper limit!"
         self.name = name
         self.limits = limits
         self.resolution = resolution
@@ -100,23 +101,22 @@ class Domain(object):
 
     def __setattr__(self, name, fuzzyfunc):
         # it's not actually a fuzzyfunc but a domain attr
-        if name in ['name', 'limits', 'resolution', 'sets']:
+        if name in ["name", "limits", "resolution", "sets"]:
             object.__setattr__(self, name, fuzzyfunc)
         # we've got a fuzzyset within this domain defined by a fuzzyfunc
         else:
             self.sets[name] = fuzzyfunc
 
     def plot(self):
-        r = arange(self.limits[0], self.limits[1] + self.resolution,
-                   self.resolution)
+        r = arange(self.limits[0], self.limits[1] + self.resolution, self.resolution)
         for s in self.sets.values():
-            print (r, s)
+            print(r, s)
             # plot(s(r))
         # show()
 
     def __call__(self, x):
         for name, f in self.sets.items():
-            print (name, f(x))
+            print(name, f(x))
 
 
 class Rule(object):
@@ -132,8 +132,7 @@ class Rule(object):
     as a function.
     """
 
-    def __init__(self, IF, THEN, believe=1,
-                 and_=None, or_=None, not_=None, inference_=None):
+    def __init__(self, IF, THEN, believe=1, and_=None, or_=None, not_=None, inference_=None):
         """The core fuzzy logic.
 
         IF is a string representing a condition using qualified fuzzy sets
@@ -166,11 +165,10 @@ class Rule(object):
 
 
 if __name__ == "__main__":
-
     import cProfile
     from timeit import Timer
 
-    import .fuzzification as fuzzy
+    from . import fuzzification as fuzzy
 
     temp = 25
     month = 9
@@ -188,14 +186,15 @@ if __name__ == "__main__":
     def call():
         return a(8.6)
 
-    cProfile.run('definition()')
-    print (Timer(definition).timeit())
+    cProfile.run("definition()")
+    print(Timer(definition).timeit())
 
-    cProfile.run('call')
-    print (Timer(call).timeit())
+    cProfile.run("call")
+    print(Timer(call).timeit())
 
     temp = Domain("temperature", limits=(0, 100))
     temp.hot = fuzzy.linear(5, 35)
 
     import doctest
+
     doctest.testmod()
