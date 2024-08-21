@@ -34,9 +34,6 @@ It's even more fun to experiment with it in [Jupyter Lab](https://jupyter.org) :
 Thanks to [Atul Kushwaha](https://github.com/coderatul), we now have an amazing [documentation](https://fuzzylogic.readthedocs.io/en/latest/) including our [Showcase](https://github.com/amogorkon/fuzzylogic/blob/master/docs/Showcase.ipynb) - check it out!
 
 # Office Hours
-You can also contact me one-on-one! Please follow https://calendly.com/amogorkon/officehours to set up a meeting :-)
-
-# Office Hours
 You can also contact me one-on-one! Check my [office hours](https://calendly.com/amogorkon/officehours) to set up a meeting :-)
 
 -- Anselm Kiefner
