@@ -311,7 +311,7 @@ def S(low: Number, high: Number) -> Callable:
     THIS FUNCTION ONLY CAN HAVE A NEGATIVE SLOPE -
     USE THE R() FUNCTION FOR POSITIVE SLOPE.
     """
-    assert low < high, f"{low} < {high} is not true."
+    assert low < high, f"{low} must be less than {high}."
 
     def f(x: Number) -> float:
         if x <= low:
