@@ -464,33 +464,38 @@ class Rule:
         """Calculate the infered value based on different methods.
         Default is center of gravity (cog).
         """
-        assert len(args) == max(
-            len(c) for c in self.conditions.keys()
-        ), "Number of values must correspond to the number of domains defined as conditions!"
-        assert isinstance(args, dict), "Please make sure to pass in the values as a dictionary."
+        assert isinstance(values, dict), "Please make sure to pass a dict[Domain, float|int] as values."
+        assert len(self.conditions) > 0, "No point in having a rule with no conditions, is there?"
         match method:
             case "cog":
-                assert (
-                    len({C.domain for C in self.conditions.values()}) == 1
-                ), "For CoG, all conditions must have the same target domain."
-                actual_values = {f: f(args[f.domain]) for S in self.conditions.keys() for f in S}
-
-                weights = []
-                for K, v in self.conditions.items():
-                    x = min((actual_values[k] for k in K if k in actual_values), default=0)
-                    if x > 0:
-                        weights.append((v, x))
-
-                if not weights:
-                    return None
+                # iterate over the conditions and calculate the actual values and weights contributing to cog
+                target_weights: list[tuple[Set, Number]] = []
                 target_domain = list(self.conditions.values())[0].domain
-                index = sum(v.center_of_gravity * x for v, x in weights) / sum(x for v, x in weights)
+                assert target_domain is not None, "Target domain must be defined."
+                for if_sets, then_set in self.conditions.items():
+                    actual_values: list[Number] = []
+                    assert then_set.domain == target_domain, "All target sets must be in the same Domain."
+                    for s in if_sets:
+                        assert s.domain is not None, "Domains must be defined."
+                        actual_values.append(s(values[s.domain]))
+                    x = min(actual_values, default=0)
+                    if x > 0:
+                        target_weights.append((then_set, x))
+                if not target_weights:
+                    return None
+                sum_weights = 0
+                sum_weighted_cogs = 0
+                for then_set, weight in target_weights:
+                    sum_weighted_cogs += then_set.center_of_gravity() * weight
+                    sum_weights += weight
+                index = sum_weighted_cogs / sum_weights
+
                 return (target_domain._high - target_domain._low) / len(
                     target_domain.range
                 ) * index + target_domain._low
 
-            case "centroid":
-                raise NotImplementedError("Centroid method not implemented yet.")
+            case "centroid":  # centroid == center of mass == center of gravity for simple solids
+                raise NotImplementedError("actually the same as 'cog' if densities are uniform.")
             case "bisector":
                 raise NotImplementedError("Bisector method not implemented yet.")
             case "mom":
@@ -529,7 +534,7 @@ def rule_from_table(table: str, references: dict):
         ): eval(df.iloc[x, y], references)  # type: ignore
         for x, y in product(range(len(df.index)), range(len(df.columns)))
     }
-    return Rule(D)
+    return Rule(D)  # type: ignore
 
 
 if __name__ == "__main__":
