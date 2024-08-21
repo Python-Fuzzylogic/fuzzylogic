@@ -22,6 +22,8 @@ import numpy as np
 from .combinators import MAX, MIN, bounded_sum, product, simple_disjoint_sum
 from .functions import inv, normalize
 
+type Number = int | float
+
 
 class FuzzyWarning(UserWarning):
     """Extra Exception so that user code can filter exceptions specific to this lib."""
@@ -49,7 +51,7 @@ class Domain:
     It is possible now to call derived sets without assignment first!
     >>> from .hedges import very
     >>> (very(~temp.hot) | ~very(temp.hot))(2)
-    1
+    1.0
 
     You MUST NOT add arbitrary attributes to an *instance* of Domain - you can
     however subclass or modify the class itself. If you REALLY have to add attributes,
@@ -65,14 +67,16 @@ class Domain:
     def __init__(
         self,
         name: str,
-        low: float | int,
-        high: float | int,
-        res: float | int = 1,
+        low: Number,
+        high: Number,
+        res: Number = 1,
         sets: dict | None = None,
     ) -> None:
         """Define a domain."""
         assert low < high, "higher bound must be greater than lower."
         assert res > 0, "resolution can't be negative or zero"
+        assert isinstance(name, str), "Name must be a string."
+        assert str.isidentifier(name), "Name must be a valid identifier."
         self._name = name
         self._high = high
         self._low = low
@@ -85,6 +89,10 @@ class Domain:
             raise FuzzyWarning(f"{x} is outside of domain!")
         return {name: s.func(x) for name, s in self._sets.items()}
 
+    def __len__(self):
+        """Return the size of the domain, as the actual number of possible values, calculated internally."""
+        return len(self.range)
+
     def __str__(self):
         """Return a string to print()."""
         return self._name
@@ -95,15 +103,13 @@ class Domain:
 
     def __eq__(self, other):
         """Test equality of two domains."""
-        return all(
-            [
-                self._name == other._name,
-                self._low == other._low,
-                self._high == other._high,
-                self._res == other._res,
-                self._sets == other._sets,
-            ]
-        )
+        return all([
+            self._name == other._name,
+            self._low == other._low,
+            self._high == other._high,
+            self._res == other._res,
+            self._sets == other._sets,
+        ])
 
     def __hash__(self):
         return id(self)
@@ -188,57 +194,71 @@ class Set:
 
     """
 
+    type T = Set
     name = None  # these are set on assignment to the domain! DO NOT MODIFY
     domain = None
 
-    def __init__(self, func: Callable, *, name: str | None = None, domain: Domain | None = None):
-        self.func = func
-        self.domain = domain
-        self.name = name
-        self.__center_of_gravity = None
+    def __init__(
+        self,
+        func: Callable[..., Number],
+        *,
+        name: str | None = None,
+        domain: Domain | None = None,
+    ):
+        self.func: Callable[..., Number] = func
+        self.domain: Domain | None = domain
+        self.name: str | None = name
+        self.__center_of_gravity: np.floating | None = None
 
-    def __call__(self, x):
-        return self.func(x)
+    def __call__(self, x: Number | np.ndarray) -> Number | np.ndarray:
+        if isinstance(x, np.ndarray):
+            return np.array([self.func(v) for v in x])
+        else:
+            return self.func(x)
 
-    def __invert__(self):
+    def __invert__(self) -> T:
         """Return a new set with 1 - function."""
         return Set(inv(self.func), domain=self.domain)
 
-    def __neg__(self):
+    def __neg__(self) -> T:
         """Synonyme for invert."""
         return Set(inv(self.func), domain=self.domain)
 
-    def __and__(self, other):
+    def __and__(self, other: T) -> T:
         """Return a new set with modified function."""
         assert self.domain == other.domain
         return Set(MIN(self.func, other.func), domain=self.domain)
 
-    def __or__(self, other):
+    def __or__(self, other: T) -> T:
         """Return a new set with modified function."""
         assert self.domain == other.domain
         return Set(MAX(self.func, other.func), domain=self.domain)
 
-    def __mul__(self, other):
+    def __mul__(self, other: T) -> T:
         """Return a new set with modified function."""
         assert self.domain == other.domain
         return Set(product(self.func, other.func), domain=self.domain)
 
-    def __add__(self, other):
+    def __add__(self, other: T) -> T:
         """Return a new set with modified function."""
         assert self.domain == other.domain
         return Set(bounded_sum(self.func, other.func), domain=self.domain)
 
-    def __xor__(self, other):
+    def __xor__(self, other: T) -> T:
         """Return a new set with modified function."""
         assert self.domain == other.domain
         return Set(simple_disjoint_sum(self.func, other.func), domain=self.domain)
 
-    def __pow__(self, power):
+    def __pow__(self, power: int) -> T:
         """Return a new set with modified function."""
-        # FYI: pow is used with hedges
-        return Set(lambda x: pow(self.func(x), power), domain=self.domain)
 
-    def __eq__(self, other):
+        # FYI: pow is used with hedges
+        def f(x: float):
+            return pow(self.func(x), power)  # TODO: test this
+
+        return Set(f, domain=self.domain)
+
+    def __eq__(self, other: T) -> bool:
         """A set is equal with another if both return the same values over the same range."""
         if self.domain is None or other.domain is None:
             # It would require complete AST analysis to check whether both Sets
@@ -251,49 +271,49 @@ class Set:
             # we simply can check if they map to the same values
             return np.array_equal(self.array(), other.array())
 
-    def __le__(self, other):
+    def __le__(self, other: T) -> bool:
         """If this <= other, it means this is a subset of the other."""
         assert self.domain == other.domain
         if self.domain is None or other.domain is None:
             raise FuzzyWarning("Can't compare without Domains.")
         return all(np.less_equal(self.array(), other.array()))
 
-    def __lt__(self, other):
+    def __lt__(self, other: T) -> bool:
         """If this < other, it means this is a proper subset of the other."""
         assert self.domain == other.domain
         if self.domain is None or other.domain is None:
             raise FuzzyWarning("Can't compare without Domains.")
         return all(np.less(self.array(), other.array()))
 
-    def __ge__(self, other):
+    def __ge__(self, other: T) -> bool:
         """If this >= other, it means this is a superset of the other."""
         assert self.domain == other.domain
         if self.domain is None or other.domain is None:
             raise FuzzyWarning("Can't compare without Domains.")
         return all(np.greater_equal(self.array(), other.array()))
 
-    def __gt__(self, other):
+    def __gt__(self, other: T) -> bool:
         """If this > other, it means this is a proper superset of the other."""
         assert self.domain == other.domain
         if self.domain is None or other.domain is None:
             raise FuzzyWarning("Can't compare without Domains.")
         return all(np.greater(self.array(), other.array()))
 
-    def __len__(self):
+    def __len__(self) -> int:
         """Number of membership values in the set, defined by bounds and resolution of domain."""
         if self.domain is None:
             raise FuzzyWarning("No domain.")
         return len(self.array())
 
     @property
-    def cardinality(self):
+    def cardinality(self) -> int:
         """The sum of all values in the set."""
         if self.domain is None:
             raise FuzzyWarning("No domain.")
         return sum(self.array())
 
     @property
-    def relative_cardinality(self):
+    def relative_cardinality(self) -> np.floating | float:
         """Relative cardinality is the sum of all membership values by number of all values."""
         if self.domain is None:
             raise FuzzyWarning("No domain.")
@@ -302,7 +322,7 @@ class Set:
             raise FuzzyWarning("The domain has no element.")
         return self.cardinality / len(self)
 
-    def concentrated(self):
+    def concentrated(self) -> T:
         """
         Alternative to hedge "very".
 
@@ -311,7 +331,7 @@ class Set:
         """
         return Set(lambda x: self.func(x) ** 2, domain=self.domain)
 
-    def intensified(self):
+    def intensified(self) -> T:
         """
         Alternative to hedges.
 
@@ -324,11 +344,11 @@ class Set:
 
         return Set(f, domain=self.domain)
 
-    def dilated(self):
+    def dilated(self) -> T:
         """Expand the set with more values and already included values are enhanced."""
         return Set(lambda x: self.func(x) ** 1.0 / 2.0, domain=self.domain)
 
-    def multiplied(self, n):
+    def multiplied(self, n) -> T:
         """Multiply with a constant factor, changing all membership values."""
         return Set(lambda x: self.func(x) * n, domain=self.domain)
 
@@ -340,15 +360,22 @@ class Set:
         V = [self.func(x) for x in R]
         plt.plot(R, V)
 
-    def array(self):
+    def array(self) -> np.ndarray:
         """Return an array of all values for this set within the given domain."""
         if self.domain is None:
             raise FuzzyWarning("No domain assigned.")
         return np.fromiter((self.func(x) for x in self.domain.range), float)
 
-    def center_of_gravity(self):
-        """Return the center of gravity for this distribution, within the given domain."""
+    def range(self) -> np.ndarray:
+        """Return the range of the domain."""
+        if self.domain is None:
+            raise FuzzyWarning("No domain assigned.")
+        return self.domain.range
 
+    def center_of_gravity(self) -> np.floating | float:
+        """Return the center of gravity for this distribution, within the given domain."""
+        if self.__center_of_gravity is not None:
+            return self.__center_of_gravity
         assert self.domain is not None, "No center of gravity with no domain."
         weights = self.array()
         if sum(weights) == 0:
@@ -357,7 +384,7 @@ class Set:
         self.__center_of_gravity = cog
         return cog
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         """
         Return a string representation of the Set that reconstructs the set with eval().
 
@@ -377,9 +404,11 @@ class Set:
             func = types.FunctionType(*args[:-1] + [closure])
             return func
         """
-        return f"Set({self.func})"
+        if self.domain is not None:
+            return f"{self.domain._name}."
+        return f"Set({__name__}({self.func.__qualname__})"
 
-    def __str__(self):
+    def __str__(self) -> str:
         """Return a string for print()."""
         if self.domain is not None:
             return f"{self.domain._name}.{self.name}"
@@ -388,48 +417,50 @@ class Set:
         else:
             return f"dangling Set({self.name}"
 
-    def normalized(self):
+    def normalized(self) -> T:
         """Return a set that is normalized *for this domain* with 1 as max."""
         if self.domain is None:
             raise FuzzyWarning("Can't normalize without domain.")
         return Set(normalize(max(self.array()), self.func), domain=self.domain)
 
-    def __hash__(self):
+    def __hash__(self) -> int:
         return id(self)
 
 
 class Rule:
     """
-    A collection of bound sets that span a multi-dimensional space of their respective domains.
+    Collection of bound sets spanning a multi-dimensional space of their domains, mapping to a target domain.
+
     """
 
-    def __init__(self, conditions, func=None):
-        print("ohalala")
-        self.conditions = {frozenset(C): oth for C, oth in conditions.items()}
-        self.func = func
+    type T = Rule
 
-    def __add__(self, other):
-        assert isinstance(other, Rule)
+    def __init__(self, conditions_in: dict[Iterable[Set] | Set, Set]):
+        self.conditions: dict[frozenset[Set], Set] = {}
+        for if_sets, then_set in conditions_in.items():
+            if isinstance(if_sets, Set):
+                if_sets = (if_sets,)
+            self.conditions[frozenset(if_sets)] = then_set
+
+    def __add__(self, other: T):
         return Rule({**self.conditions, **other.conditions})
 
-    def __radd__(self, other):
-        assert isinstance(other, (Rule, int))
+    def __radd__(self, other: T | int) -> T:
         # we're using sum(..)
         if isinstance(other, int):
             return self
         return Rule({**self.conditions, **other.conditions})
 
-    def __or__(self, other):
-        assert isinstance(other, Rule)
+    def __or__(self, other: T):
         return Rule({**self.conditions, **other.conditions})
 
-    def __eq__(self, other):
+    def __eq__(self, other: T):
         return self.conditions == other.conditions
 
     def __getitem__(self, key):
         return self.conditions[frozenset(key)]
 
-    def __call__(self, args: "dict[Domain, float]", method="cog"):
+    def __call__(self, values: dict[Domain, float | int], method="cog") -> np.floating | float | None:
         """Calculate the infered value based on different methods.
         Default is center of gravity (cog).
         """
