@@ -403,19 +403,18 @@ class Set:
             closure = create_function_closure.__closure__
             func = types.FunctionType(*args[:-1] + [closure])
             return func
+
+        probably best realized by AST-analysis and code generation...
         """
         if self.domain is not None:
-            return f"{self.domain._name}."
+            return f"{self.domain._name}.{self.name}"
         return f"Set({__name__}({self.func.__qualname__})"
 
     def __str__(self) -> str:
         """Return a string for print()."""
         if self.domain is not None:
             return f"{self.domain._name}.{self.name}"
-        if self.name is None:
-            return f"dangling Set({self.func})"
-        else:
-            return f"dangling Set({self.name}"
+        return f"dangling Set({self.func.__name__}"
 
     def normalized(self) -> T:
         """Return a set that is normalized *for this domain* with 1 as max."""
