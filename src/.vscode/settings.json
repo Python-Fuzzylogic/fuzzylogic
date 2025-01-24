@@ -1,6 +1,6 @@
 {
     "python.testing.pytestArgs": [
-        "fuzzylogic"
+        "."
     ],
     "python.testing.unittestEnabled": false,
     "python.testing.pytestEnabled": true,

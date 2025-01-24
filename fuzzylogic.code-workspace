@@ -1,12 +1,8 @@
 {
 	"folders": [
 		{
-			"path": "./src/"
+			"path": "."
 		},
-		{
-			"name": "__pycache__",
-			"path": "src/fuzzylogic/__pycache__"
-		}
 	],
 	"settings": {
 		"python.testing.pytestEnabled": true
