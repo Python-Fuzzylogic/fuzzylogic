@@ -142,7 +142,9 @@ class Domain:
         if name in self._sets:
             del self._sets[name]
         else:
-            raise FuzzyWarning("Trying to delete a regular attr, this needs extra care.")
+            raise FuzzyWarning(
+                "Trying to delete a regular attr, this needs extra care."
+            )
 
     @property
     def range(self):
@@ -156,7 +158,9 @@ class Domain:
         if int(self._res) == self._res:
             return np.arange(self._low, self._high + self._res, int(self._res))
         else:
-            return np.linspace(self._low, self._high, int((self._high - self._low) / self._res) + 1)
+            return np.linspace(
+                self._low, self._high, int((self._high - self._low) / self._res) + 1
+            )
 
     def min(self, x):
         """Standard way to get the min over all membership funcs.
@@ -387,25 +391,12 @@ class Set:
     def __repr__(self) -> str:
         """
         Return a string representation of the Set that reconstructs the set with eval().
-
-        *******
-        Current implementation does NOT work correctly.
-
-        This is harder than expected since all functions are (recursive!) closures which
-        can't simply be pickled. If this functionality really is needed, all functions
-        would have to be peppered with closure-returning overhead such as
-
-        def create_closure_and_function(*args):
-            func = None
-            def create_function_closure():
-                return func
-
-            closure = create_function_closure.__closure__
-            func = types.FunctionType(*args[:-1] + [closure])
-            return func
-
-        probably best realized by AST-analysis and code generation...
         """
+
+        # experimental
+        # x = f"{self.func.__qualname__.split('.')[0]}({self.func.__closure__[0].cell_contents.__code__.co_nlocals}))"
+        # print(x)
+
         if self.domain is not None:
             return f"{self.domain._name}.{self.name}"
         return f"Set({__name__}({self.func.__qualname__})"
@@ -459,12 +450,18 @@ class Rule:
     def __getitem__(self, key):
         return self.conditions[frozenset(key)]
 
-    def __call__(self, values: dict[Domain, float | int], method="cog") -> np.floating | float | None:
+    def __call__(
+        self, values: dict[Domain, float | int], method="cog"
+    ) -> np.floating | float | None:
         """Calculate the infered value based on different methods.
         Default is center of gravity (cog).
         """
-        assert isinstance(values, dict), "Please make sure to pass a dict[Domain, float|int] as values."
-        assert len(self.conditions) > 0, "No point in having a rule with no conditions, is there?"
+        assert isinstance(values, dict), (
+            "Please make sure to pass a dict[Domain, float|int] as values."
+        )
+        assert len(self.conditions) > 0, (
+            "No point in having a rule with no conditions, is there?"
+        )
         match method:
             case "cog":
                 # iterate over the conditions and calculate the actual values and weights contributing to cog
@@ -473,7 +470,9 @@ class Rule:
                 assert target_domain is not None, "Target domain must be defined."
                 for if_sets, then_set in self.conditions.items():
                     actual_values: list[Number] = []
-                    assert then_set.domain == target_domain, "All target sets must be in the same Domain."
+                    assert then_set.domain == target_domain, (
+                        "All target sets must be in the same Domain."
+                    )
                     for s in if_sets:
                         assert s.domain is not None, "Domains must be defined."
                         actual_values.append(s(values[s.domain]))
@@ -488,13 +487,17 @@ class Rule:
                     sum_weighted_cogs += then_set.center_of_gravity() * weight
                     sum_weights += weight
                 index = sum_weighted_cogs / sum_weights
-
-                return (target_domain._high - target_domain._low) / len(
+                res = (target_domain._high - target_domain._low) / len(
                     target_domain.range
                 ) * index + target_domain._low
+                return res
 
-            case "centroid":  # centroid == center of mass == center of gravity for simple solids
-                raise NotImplementedError("actually the same as 'cog' if densities are uniform.")
+            case (
+                "centroid"
+            ):  # centroid == center of mass == center of gravity for simple solids
+                raise NotImplementedError(
+                    "actually the same as 'cog' if densities are uniform."
+                )
             case "bisector":
                 raise NotImplementedError("Bisector method not implemented yet.")
             case "mom":
