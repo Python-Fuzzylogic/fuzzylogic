@@ -68,7 +68,7 @@ class Domain:
     in a subclass to enable concurrent evaluation for performance improvement.
     """
 
-    __slots__ = ["name", "low", "high", "res", "_sets"]
+    __slots__ = ["_name", "_low", "_high", "_res", "_sets"]
 
     def __init__(
         self,
@@ -83,15 +83,15 @@ class Domain:
         assert res > 0, "resolution can't be negative or zero"
         assert isinstance(name, str), "Name must be a string."
         assert str.isidentifier(name), "Name must be a valid identifier."
-        self.name = name
-        self.high = high
-        self.low = low
-        self.res = res
+        self._name = name
+        self._high = high
+        self._low = low
+        self._res = res
         self._sets = {} if sets is None else sets  # Name: Set(Function())
 
     def __call__(self, x: float) -> dict[str, float]:
         """Pass a value to all sets of the domain and return a dict with results."""
-        if not (self.low <= x <= self.high):
+        if not (self._low <= x <= self._high):
             raise FuzzyWarning(f"{x} is outside of domain!")
         return {name: s.func(x) for name, s in self._sets.items()}
 
@@ -101,21 +101,21 @@ class Domain:
 
     def __str__(self) -> str:
         """Return a string to print()."""
-        return self.name
+        return self._name
 
     def __repr__(self) -> str:
         """Return a string so that eval(repr(Domain)) == Domain."""
-        return f"Domain('{self.name}', {self.low}, {self.high}, res={self.res}, sets={self._sets})"
+        return f"Domain('{self._name}', {self._low}, {self._high}, res={self._res}, sets={self._sets})"
 
     def __eq__(self, other: object) -> bool:
         """Test equality of two domains."""
         if not isinstance(other, Domain):
             return False
         return all([
-            self.name == other.name,
-            self.low == other.low,
-            self.high == other.high,
-            self.res == other.res,
+            self._name == other._name,
+            self._low == other._low,
+            self._high == other._high,
+            self._res == other._res,
             self._sets == other._sets,
         ])
 
@@ -161,10 +161,10 @@ class Domain:
 
         High upper bound is INCLUDED unlike range.
         """
-        if int(self.res) == self.res:
-            return np.arange(self.low, self.high + self.res, int(self.res))
+        if int(self._res) == self._res:
+            return np.arange(self._low, self._high + self._res, int(self._res))
         else:
-            return np.linspace(self.low, self.high, int((self.high - self.low) / self.res) + 1)
+            return np.linspace(self._low, self._high, int((self._high - self._low) / self._res) + 1)
 
     def min(self, x: float) -> float:
         """Standard way to get the min over all membership funcs.
@@ -428,13 +428,13 @@ class Set:
         # print(x)
 
         if self.domain is not None:
-            return f"{self.domain.name}.{self.name}"
+            return f"{self.domain._name}.{self.name}"  # type: ignore
         return f"Set({__name__}({self.func.__qualname__})"
 
     def __str__(self) -> str:
         """Return a string for print()."""
         if self.domain is not None:
-            return f"{self.domain.name}.{self.name}"
+            return f"{self.domain._name}.{self.name}"  # type: ignore
         return f"dangling Set({self.func.__name__}"
 
     def normalized(self) -> Set:
@@ -511,9 +511,9 @@ class Rule:
                     sum_weighted_cogs += then_set.center_of_gravity() * weight
                     sum_weights += weight
                 index = sum_weighted_cogs / sum_weights
-                return (target_domain.high - target_domain.low) / len(
+                return (target_domain._high - target_domain._low) / len(  # type: ignore
                     target_domain.range
-                ) * index + target_domain.low
+                ) * index + target_domain._low  # type: ignore
             case "centroid":  # centroid == center of mass == center of gravity for simple solids
                 raise NotImplementedError("actually the same as 'cog' if densities are uniform.")
             case "bisector":

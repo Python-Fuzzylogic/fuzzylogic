@@ -78,10 +78,10 @@ def weighted_sum(*, weights: dict[str, float], target_d: Domain) -> Callable[[di
     """
     assert sum(weights.values()) == 1, breakpoint()
 
-    rsc = rescale(target_d.low, target_d.high)
+    rsc = rescale(target_d._low, target_d._high)  # type: ignore
 
     def f(memberships: dict[str, float]) -> float:
         result = sum(r * weights[n] for n, r in memberships.items())
-        return round_partial(rsc(result), target_d.res)
+        return round_partial(rsc(result), target_d._res)  # type: ignore
 
     return f
