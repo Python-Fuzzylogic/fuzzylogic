@@ -38,115 +38,116 @@ and combines these membership-values via the inner op function, reducing it all 
 from collections.abc import Callable
 from functools import reduce
 
-from fuzzylogic.functions import noop  # noqa
 from numpy import multiply
+
+type Membership = Callable[[float], float]
 
 try:
     raise ImportError
     # from numba import njit # still not ready for prime time :(
 except ImportError:
 
-    def njit(func):
+    def njit(func: Membership) -> Membership:
         return func
 
 
-def MIN(*guncs) -> Callable:
+def MIN(*guncs: Membership) -> Membership:
     """Classic AND variant."""
     funcs = list(guncs)
 
-    def F(z):
+    def F(z: float) -> float:
         return min(f(z) for f in funcs)
 
     return F
 
 
-def MAX(*guncs):
+def MAX(*guncs: Membership) -> Membership:
     """Classic OR variant."""
     funcs = list(guncs)
 
-    def F(z):
+    def F(z: float) -> float:
         return max((f(z) for f in funcs), default=1)
 
     return F
 
 
-def product(*guncs):
+def product(*guncs: Membership) -> Membership:
     """AND variant."""
     funcs = list(guncs)
 
-    def F(z):
+    def F(z: float) -> float:
         return reduce(multiply, (f(z) for f in funcs))
 
     return F
 
 
-def bounded_sum(*guncs):
+def bounded_sum(*guncs: Membership) -> Membership:
     """OR variant."""
     funcs = list(guncs)
 
-    def op(x, y):
+    def op(x: float, y: float) -> float:
         return x + y - x * y
 
-    def F(z):
+    def F(z: float) -> float:
         return reduce(op, (f(z) for f in funcs))
 
     return F
 
 
-def lukasiewicz_AND(*guncs):
+def lukasiewicz_AND(*guncs: Membership) -> Membership:
     """AND variant."""
     funcs = list(guncs)
 
-    def op(x, y):
+    def op(x: float, y: float) -> float:
         return min(1, x + y)
 
-    def F(z):
+    def F(z: float) -> float:
         return reduce(op, (f(z) for f in funcs))
 
     return F
 
 
-def lukasiewicz_OR(*guncs):
+def lukasiewicz_OR(*guncs: Membership) -> Membership:
     """OR variant."""
 
     funcs = list(guncs)
 
-    def op(x, y):
+    def op(x: float, y: float) -> float:
         return max(0, x + y - 1)
 
-    def F(z):
+    def F(z: float) -> float:
         return reduce(op, (f(z) for f in funcs))
 
     return F
 
 
-def einstein_product(*guncs):
+def einstein_product(*guncs: Membership) -> Membership:
     """AND variant."""
     funcs = list(guncs)
 
-    def op(x, y):
+    def op(x: float, y: float) -> float:
         return (x * y) / (2 - (x + y - x * y))
 
-    def F(z):
+    def F(z: float) -> float:
         return reduce(op, (f(z) for f in funcs))
 
     return F
 
 
-def einstein_sum(*guncs):
+def einstein_sum(*guncs: Membership) -> Membership:
     """OR variant."""
     funcs = list(guncs)
 
-    def op(x, y):
+    def op(x: float, y: float) -> float:
         return (x + y) / (1 + x * y)
 
-    def F(z):
+    def F(z: float) -> float:
         return reduce(op, (f(z) for f in funcs))
 
     return F
 
 
-def hamacher_product(*guncs):
+def hamacher_product(*guncs: Membership) -> Membership:
     """AND variant.
 
     (xy) / (x + y - xy) for x, y != 0
@@ -154,16 +155,16 @@ def hamacher_product(*guncs):
     """
     funcs = list(guncs)
 
-    def op(x, y):
+    def op(x: float, y: float) -> float:
         return (x * y) / (x + y - x * y) if x != 0 and y != 0 else 0
 
-    def F(x):
-        return reduce(op, (f(x) for f in funcs))
+    def F(z: float) -> float:
+        return reduce(op, (f(z) for f in funcs))
 
     return F
 
 
-def hamacher_sum(*guncs):
+def hamacher_sum(*guncs: Membership) -> Membership:
     """OR variant.
 
     (x + y - 2xy) / (1 - xy) for x,y != 1
@@ -171,16 +172,16 @@ def hamacher_sum(*guncs):
     """
     funcs = list(guncs)
 
-    def op(x, y):
+    def op(x: float, y: float) -> float:
         return (x + y - 2 * x * y) / (1 - x * y) if x != 1 or y != 1 else 1
 
-    def F(z):
+    def F(z: float) -> float:
         return reduce(op, (f(z) for f in funcs))
 
     return F
 
 
-def lambda_op(h):
+def lambda_op(h: float) -> Callable[..., Membership]:
     """A 'compensatoric' operator, combining AND with OR by a weighing factor l.
 
     This complicates matters a little, since all normal combinators only take functions
@@ -189,13 +190,13 @@ def lambda_op(h):
     assert 0 <= h <= 1, breakpoint()
 
     # sourcery skip: use-function-docstrings
-    def E(*guncs):
+    def E(*guncs: Membership) -> Membership:
         funcs = list(guncs)
 
-        def op(x, y):
+        def op(x: float, y: float) -> float:
             return h * (x * y) + (1 - h) * (x + y - x * y)
 
-        def F(z):
+        def F(z: float) -> float:
             return reduce(op, (f(z) for f in funcs))
 
         return F
@@ -203,7 +204,7 @@ def lambda_op(h):
     return E
 
 
-def gamma_op(g):
+def gamma_op(g: float) -> Callable[..., Membership]:
     """Combine AND with OR by a weighing factor g.
 
     This is called a 'compensatoric' operator.
@@ -216,13 +217,13 @@ def gamma_op(g):
     """
     assert 0 <= g <= 1
 
-    def E(*guncs):
+    def E(*guncs: Membership) -> Membership:
         funcs = list(guncs)
 
-        def op(x, y):
+        def op(x: float, y: float) -> float:
             return (x * y) ** (1 - g) * ((1 - x) * (1 - y)) ** g
 
-        def F(z):
+        def F(z: float) -> float:
             return reduce(op, (f(z) for f in funcs))
 
         return F
@@ -230,7 +231,7 @@ def gamma_op(g):
     return E
 
 
-def simple_disjoint_sum(*funcs):  # sourcery skip: unwrap-iterable-construction
+def simple_disjoint_sum(*funcs: Membership) -> Membership:  # sourcery skip: unwrap-iterable-construction
     """Simple fuzzy XOR operation.
     Someone fancy a math proof?
 
@@ -264,7 +265,7 @@ def simple_disjoint_sum(*funcs):  # sourcery skip: unwrap-iterable-construction
     max(min(0,0.5,0), min(0.5,1,0), min(1,0.5,1)) == 0.5
     """
 
-    def F(z):
+    def F(z: float) -> float:
         # Reminder how it works for 2 args
         # x, y = a(z), b(z)
         # return max(min(x, 1-y), min(1-x, y))

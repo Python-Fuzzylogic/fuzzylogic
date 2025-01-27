@@ -5,24 +5,30 @@ Primary abstractions for recursive functions and arrays,
 adding logical operaitons for easier handling.
 """
 
-from typing import Callable, Iterable
+from __future__ import annotations
+
+from typing import Any, Iterable, overload
+
+from numpy.typing import NDArray
 
 try:
     import matplotlib.pyplot as plt
 except ImportError:
-
-    def plt(*args, **kwargs):
-        raise ImportError(
-            "matplotlib not available. Please re-install with 'pip install fuzzylogic[plotting]'"
-        )
+    plt = None
 
 
 import numpy as np
 
 from .combinators import MAX, MIN, bounded_sum, product, simple_disjoint_sum
-from .functions import inv, normalize
+from .functions import Membership, inv, normalize
 
-type Number = int | float
+type Array = (
+    NDArray[np.float16]
+    | NDArray[np.float32]
+    | NDArray[np.float64]
+    | NDArray[np.float128]
+    | NDArray[np.float256]
+)
 
 
 class FuzzyWarning(UserWarning):
@@ -62,66 +68,68 @@ class Domain:
     in a subclass to enable concurrent evaluation for performance improvement.
     """
 
-    __slots__ = ["_name", "_low", "_high", "_res", "_sets"]
+    __slots__ = ["name", "low", "high", "res", "_sets"]
 
     def __init__(
         self,
         name: str,
-        low: Number,
-        high: Number,
-        res: Number = 1,
-        sets: dict | None = None,
+        low: float,
+        high: float,
+        res: float = 1,
+        sets: dict[str, Set] | None = None,
     ) -> None:
         """Define a domain."""
         assert low < high, "higher bound must be greater than lower."
         assert res > 0, "resolution can't be negative or zero"
         assert isinstance(name, str), "Name must be a string."
         assert str.isidentifier(name), "Name must be a valid identifier."
-        self._name = name
-        self._high = high
-        self._low = low
-        self._res = res
+        self.name = name
+        self.high = high
+        self.low = low
+        self.res = res
         self._sets = {} if sets is None else sets  # Name: Set(Function())
 
-    def __call__(self, x):
+    def __call__(self, x: float) -> dict[str, float]:
         """Pass a value to all sets of the domain and return a dict with results."""
-        if not (self._low <= x <= self._high):
+        if not (self.low <= x <= self.high):
             raise FuzzyWarning(f"{x} is outside of domain!")
         return {name: s.func(x) for name, s in self._sets.items()}
 
-    def __len__(self):
+    def __len__(self) -> int:
         """Return the size of the domain, as the actual number of possible values, calculated internally."""
         return len(self.range)
 
-    def __str__(self):
+    def __str__(self) -> str:
         """Return a string to print()."""
-        return self._name
+        return self.name
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         """Return a string so that eval(repr(Domain)) == Domain."""
-        return f"Domain('{self._name}', {self._low}, {self._high}, res={self._res}, sets={self._sets})"
+        return f"Domain('{self.name}', {self.low}, {self.high}, res={self.res}, sets={self._sets})"
 
-    def __eq__(self, other):
+    def __eq__(self, other: object) -> bool:
         """Test equality of two domains."""
+        if not isinstance(other, Domain):
+            return False
         return all([
-            self._name == other._name,
-            self._low == other._low,
-            self._high == other._high,
-            self._res == other._res,
+            self.name == other.name,
+            self.low == other.low,
+            self.high == other.high,
+            self.res == other.res,
             self._sets == other._sets,
         ])
 
-    def __hash__(self):
+    def __hash__(self) -> int:
         return id(self)
 
-    def __getattr__(self, name):
+    def __getattr__(self, name: str) -> Set:
         """Get the value of an attribute. Called after __getattribute__ is called with an AttributeError."""
         if name in self._sets:
             return self._sets[name]
         else:
             raise AttributeError(f"{name} is not a set or attribute")
 
-    def __setattr__(self, name, value):
+    def __setattr__(self, name: str, value: Set | Membership) -> None:
         """Define a set within a domain or assign a value to a domain attribute."""
         # It's a domain attr
         if name in self.__slots__:
@@ -137,17 +145,15 @@ class Domain:
             value.domain = self
             value.name = name
 
-    def __delattr__(self, name):
+    def __delattr__(self, name: str) -> None:
         """Delete a fuzzy set from the domain."""
         if name in self._sets:
             del self._sets[name]
         else:
-            raise FuzzyWarning(
-                "Trying to delete a regular attr, this needs extra care."
-            )
+            raise FuzzyWarning("Trying to delete a regular attr, this needs extra care.")
 
     @property
-    def range(self):
+    def range(self) -> Array:
         """Return an arange object with the domain's specifics.
 
         This is used to conveniently iterate over all possible values
@@ -155,14 +161,12 @@ class Domain:
 
         High upper bound is INCLUDED unlike range.
         """
-        if int(self._res) == self._res:
-            return np.arange(self._low, self._high + self._res, int(self._res))
+        if int(self.res) == self.res:
+            return np.arange(self.low, self.high + self.res, int(self.res))
         else:
-            return np.linspace(
-                self._low, self._high, int((self._high - self._low) / self._res) + 1
-            )
+            return np.linspace(self.low, self.high, int((self.high - self.low) / self.res) + 1)
 
-    def min(self, x):
+    def min(self, x: float) -> float:
         """Standard way to get the min over all membership funcs.
 
         It's not just more convenient but also faster than
@@ -171,7 +175,7 @@ class Domain:
         """
         return min((f(x) for f in self._sets.values()), default=0)
 
-    def max(self, x):
+    def max(self, x: float) -> float:
         """Standard way to get the max over all membership funcs."""
         return max((f(x) for f in self._sets.values()), default=0)
 
@@ -198,73 +202,93 @@ class Set:
 
     """
 
-    type T = Set
     name = None  # these are set on assignment to the domain! DO NOT MODIFY
     domain = None
 
     def __init__(
         self,
-        func: Callable[..., Number],
+        func: Membership,
         *,
         name: str | None = None,
         domain: Domain | None = None,
     ):
-        self.func: Callable[..., Number] = func
+        self.func: Membership = func
         self.domain: Domain | None = domain
         self.name: str | None = name
-        self.__center_of_gravity: np.floating | None = None
+        self.__center_of_gravity: float | None = None
 
-    def __call__(self, x: Number | np.ndarray) -> Number | np.ndarray:
+    @overload
+    def __call__(self, x: float, /) -> float: ...
+
+    @overload
+    def __call__(self, x: NDArray[np.float16], /) -> NDArray[np.float16]: ...
+
+    @overload
+    def __call__(self, x: NDArray[np.float32], /) -> NDArray[np.float32]: ...
+
+    @overload
+    def __call__(self, x: NDArray[np.float64], /) -> NDArray[np.float64]: ...
+
+    @overload
+    def __call__(self, x: NDArray[np.float128], /) -> NDArray[np.float128]: ...
+
+    @overload
+    def __call__(self, x: NDArray[np.float256], /) -> NDArray[np.float256]: ...
+
+    def __call__(
+        self,
+        x: float | Array,
+    ) -> float | Array:
         if isinstance(x, np.ndarray):
-            return np.array([self.func(v) for v in x])
+            return np.vectorize(self.func)(x)
         else:
             return self.func(x)
 
-    def __invert__(self) -> T:
+    def __invert__(self) -> Set:
         """Return a new set with 1 - function."""
         return Set(inv(self.func), domain=self.domain)
 
-    def __neg__(self) -> T:
+    def __neg__(self) -> Set:
         """Synonyme for invert."""
         return Set(inv(self.func), domain=self.domain)
 
-    def __and__(self, other: T) -> T:
+    def __and__(self, other: Set) -> Set:
         """Return a new set with modified function."""
         assert self.domain == other.domain
         return Set(MIN(self.func, other.func), domain=self.domain)
 
-    def __or__(self, other: T) -> T:
+    def __or__(self, other: Set) -> Set:
         """Return a new set with modified function."""
         assert self.domain == other.domain
         return Set(MAX(self.func, other.func), domain=self.domain)
 
-    def __mul__(self, other: T) -> T:
+    def __mul__(self, other: Set) -> Set:
         """Return a new set with modified function."""
         assert self.domain == other.domain
         return Set(product(self.func, other.func), domain=self.domain)
 
-    def __add__(self, other: T) -> T:
+    def __add__(self, other: Set) -> Set:
         """Return a new set with modified function."""
         assert self.domain == other.domain
         return Set(bounded_sum(self.func, other.func), domain=self.domain)
 
-    def __xor__(self, other: T) -> T:
+    def __xor__(self, other: Set) -> Set:
         """Return a new set with modified function."""
         assert self.domain == other.domain
         return Set(simple_disjoint_sum(self.func, other.func), domain=self.domain)
 
-    def __pow__(self, power: int) -> T:
+    def __pow__(self, power: int) -> Set:
         """Return a new set with modified function."""
 
         # FYI: pow is used with hedges
         def f(x: float):
-            return pow(self.func(x), power)  # TODO: test this
+            return pow(self.func(x), power)
 
         return Set(f, domain=self.domain)
 
-    def __eq__(self, other: T) -> bool:
+    def __eq__(self, other: object) -> bool:
         """A set is equal with another if both return the same values over the same range."""
-        if self.domain is None or other.domain is None:
+        if self.domain is None or not isinstance(other, Set) or other.domain is None:
             # It would require complete AST analysis to check whether both Sets
             # represent the same recursive functions -
             # additionally, there are infinitely many mathematically equivalent
@@ -275,28 +299,28 @@ class Set:
             # we simply can check if they map to the same values
             return np.array_equal(self.array(), other.array())
 
-    def __le__(self, other: T) -> bool:
+    def __le__(self, other: Set) -> bool:
         """If this <= other, it means this is a subset of the other."""
         assert self.domain == other.domain
         if self.domain is None or other.domain is None:
             raise FuzzyWarning("Can't compare without Domains.")
         return all(np.less_equal(self.array(), other.array()))
 
-    def __lt__(self, other: T) -> bool:
+    def __lt__(self, other: Set) -> bool:
         """If this < other, it means this is a proper subset of the other."""
         assert self.domain == other.domain
         if self.domain is None or other.domain is None:
             raise FuzzyWarning("Can't compare without Domains.")
         return all(np.less(self.array(), other.array()))
 
-    def __ge__(self, other: T) -> bool:
+    def __ge__(self, other: Set) -> bool:
         """If this >= other, it means this is a superset of the other."""
         assert self.domain == other.domain
         if self.domain is None or other.domain is None:
             raise FuzzyWarning("Can't compare without Domains.")
         return all(np.greater_equal(self.array(), other.array()))
 
-    def __gt__(self, other: T) -> bool:
+    def __gt__(self, other: Set) -> bool:
         """If this > other, it means this is a proper superset of the other."""
         assert self.domain == other.domain
         if self.domain is None or other.domain is None:
@@ -310,15 +334,15 @@ class Set:
         return len(self.array())
 
     @property
-    def cardinality(self) -> int:
+    def cardinality(self) -> float:
         """The sum of all values in the set."""
         if self.domain is None:
             raise FuzzyWarning("No domain.")
         return sum(self.array())
 
     @property
-    def relative_cardinality(self) -> np.floating | float:
-        """Relative cardinality is the sum of all membership values by number of all values."""
+    def relative_cardinality(self) -> float:
+        """Relative cardinality is the sum of all membership values by float of all values."""
         if self.domain is None:
             raise FuzzyWarning("No domain.")
         if len(self) == 0:
@@ -326,7 +350,7 @@ class Set:
             raise FuzzyWarning("The domain has no element.")
         return self.cardinality / len(self)
 
-    def concentrated(self) -> T:
+    def concentrated(self) -> Set:
         """
         Alternative to hedge "very".
 
@@ -335,7 +359,7 @@ class Set:
         """
         return Set(lambda x: self.func(x) ** 2, domain=self.domain)
 
-    def intensified(self) -> T:
+    def intensified(self) -> Set:
         """
         Alternative to hedges.
 
@@ -343,40 +367,45 @@ class Set:
         already strongly belong to the set and dampened the rest.
         """
 
-        def f(x):
+        def f(x: float) -> float:
             return 2 * self.func(x) ** 2 if x < 0.5 else 1 - 2 * (1 - self.func(x) ** 2)
 
         return Set(f, domain=self.domain)
 
-    def dilated(self) -> T:
+    def dilated(self) -> Set:
         """Expand the set with more values and already included values are enhanced."""
         return Set(lambda x: self.func(x) ** 1.0 / 2.0, domain=self.domain)
 
-    def multiplied(self, n) -> T:
+    def multiplied(self, n: float) -> Set:
         """Multiply with a constant factor, changing all membership values."""
         return Set(lambda x: self.func(x) * n, domain=self.domain)
 
-    def plot(self):
+    def plot(self) -> None:
         """Graph the set in the given domain."""
         if self.domain is None:
             raise FuzzyWarning("No domain assigned, cannot plot.")
         R = self.domain.range
         V = [self.func(x) for x in R]
-        plt.plot(R, V)
+        if plt:
+            plt.plot(R, V)  # type: ignore
+        else:
+            raise ImportError(
+                "matplotlib not available. Please re-install with 'pip install fuzzylogic[plotting]'"
+            )
 
-    def array(self) -> np.ndarray:
+    def array(self) -> Array:
         """Return an array of all values for this set within the given domain."""
         if self.domain is None:
             raise FuzzyWarning("No domain assigned.")
         return np.fromiter((self.func(x) for x in self.domain.range), float)
 
-    def range(self) -> np.ndarray:
+    def range(self) -> Array:
         """Return the range of the domain."""
         if self.domain is None:
             raise FuzzyWarning("No domain assigned.")
         return self.domain.range
 
-    def center_of_gravity(self) -> np.floating | float:
+    def center_of_gravity(self) -> float:
         """Return the center of gravity for this distribution, within the given domain."""
         if self.__center_of_gravity is not None:
             return self.__center_of_gravity
@@ -384,7 +413,7 @@ class Set:
         weights = self.array()
         if sum(weights) == 0:
             return 0
-        cog = np.average(self.domain.range, weights=weights)
+        cog = float(np.average(self.domain.range, weights=weights))
         self.__center_of_gravity = cog
         return cog
 
@@ -394,20 +423,21 @@ class Set:
         """
 
         # experimental
-        # x = f"{self.func.__qualname__.split('.')[0]}({self.func.__closure__[0].cell_contents.__code__.co_nlocals}))"
+        # x = f"{self.func.__qualname__.split('.')[0]}({self.func.__closure__[0].
+        # cell_contents.__code__.co_nlocals}))"
         # print(x)
 
         if self.domain is not None:
-            return f"{self.domain._name}.{self.name}"
+            return f"{self.domain.name}.{self.name}"
         return f"Set({__name__}({self.func.__qualname__})"
 
     def __str__(self) -> str:
         """Return a string for print()."""
         if self.domain is not None:
-            return f"{self.domain._name}.{self.name}"
+            return f"{self.domain.name}.{self.name}"
         return f"dangling Set({self.func.__name__}"
 
-    def normalized(self) -> T:
+    def normalized(self) -> Set:
         """Return a set that is normalized *for this domain* with 1 as max."""
         if self.domain is None:
             raise FuzzyWarning("Can't normalize without domain.")
@@ -432,47 +462,41 @@ class Rule:
                 if_sets = (if_sets,)
             self.conditions[frozenset(if_sets)] = then_set
 
-    def __add__(self, other: T):
+    def __add__(self, other: Rule) -> Rule:
         return Rule({**self.conditions, **other.conditions})
 
-    def __radd__(self, other: T | int) -> T:
+    def __radd__(self, other: Rule | int) -> Rule:
         # we're using sum(..)
         if isinstance(other, int):
             return self
         return Rule({**self.conditions, **other.conditions})
 
-    def __or__(self, other: T):
+    def __or__(self, other: Rule) -> Rule:
         return Rule({**self.conditions, **other.conditions})
 
-    def __eq__(self, other: T):
+    def __eq__(self, other: object) -> bool:
+        if not isinstance(other, Rule):
+            return False
         return self.conditions == other.conditions
 
-    def __getitem__(self, key):
+    def __getitem__(self, key: Iterable[Set]) -> Set:
         return self.conditions[frozenset(key)]
 
-    def __call__(
-        self, values: dict[Domain, float | int], method="cog"
-    ) -> np.floating | float | None:
+    def __call__(self, values: dict[Domain, float | int], method: str = "cog") -> float | None:
         """Calculate the infered value based on different methods.
         Default is center of gravity (cog).
         """
-        assert isinstance(values, dict), (
-            "Please make sure to pass a dict[Domain, float|int] as values."
-        )
-        assert len(self.conditions) > 0, (
-            "No point in having a rule with no conditions, is there?"
-        )
+        assert isinstance(values, dict), "Please make sure to pass a dict[Domain, float|int] as values."
+        assert len(self.conditions) > 0, "No point in having a rule with no conditions, is there?"
         match method:
             case "cog":
                 # iterate over the conditions and calculate the actual values and weights contributing to cog
-                target_weights: list[tuple[Set, Number]] = []
+                target_weights: list[tuple[Set, float]] = []
                 target_domain = list(self.conditions.values())[0].domain
                 assert target_domain is not None, "Target domain must be defined."
                 for if_sets, then_set in self.conditions.items():
-                    actual_values: list[Number] = []
-                    assert then_set.domain == target_domain, (
-                        "All target sets must be in the same Domain."
-                    )
+                    actual_values: list[float] = []
+                    assert then_set.domain == target_domain, "All target sets must be in the same Domain."
                     for s in if_sets:
                         assert s.domain is not None, "Domains must be defined."
                         actual_values.append(s(values[s.domain]))
@@ -482,22 +506,16 @@ class Rule:
                 if not target_weights:
                     return None
                 sum_weights = 0
-                sum_weighted_cogs = 0
+                sum_weighted_cogs: float = 0
                 for then_set, weight in target_weights:
                     sum_weighted_cogs += then_set.center_of_gravity() * weight
                     sum_weights += weight
                 index = sum_weighted_cogs / sum_weights
-                res = (target_domain._high - target_domain._low) / len(
+                return (target_domain.high - target_domain.low) / len(
                     target_domain.range
-                ) * index + target_domain._low
-                return res
-
-            case (
-                "centroid"
-            ):  # centroid == center of mass == center of gravity for simple solids
-                raise NotImplementedError(
-                    "actually the same as 'cog' if densities are uniform."
-                )
+                ) * index + target_domain.low
+            case "centroid":  # centroid == center of mass == center of gravity for simple solids
+                raise NotImplementedError("actually the same as 'cog' if densities are uniform.")
             case "bisector":
                 raise NotImplementedError("Bisector method not implemented yet.")
             case "mom":
@@ -510,7 +528,7 @@ class Rule:
                 raise ValueError("Invalid method.")
 
 
-def rule_from_table(table: str, references: dict):
+def rule_from_table(table: str, references: dict[str, float]) -> Rule:
     """Turn a (2D) string table into a Rule of fuzzy sets.
 
     ATTENTION: This will eval() all strings in the table.
@@ -523,18 +541,17 @@ def rule_from_table(table: str, references: dict):
     """
     import io
     from itertools import product
-    from typing import Any
 
     import pandas as pd
 
-    df = pd.read_table(io.StringIO(table), sep=r"\s+")
+    df = pd.read_table(io.StringIO(table), sep=r"\s+")  # type: ignore
 
     D: dict[tuple[Any, Any], Any] = {
         (
             eval(df.index[x].strip(), references),  # type: ignore
             eval(df.columns[y].strip(), references),  # type: ignore
         ): eval(df.iloc[x, y], references)  # type: ignore
-        for x, y in product(range(len(df.index)), range(len(df.columns)))
+        for x, y in product(range(len(df.index)), range(len(df.columns)))  # type: ignore
     }
     return Rule(D)  # type: ignore
 

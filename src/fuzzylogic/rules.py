@@ -1,11 +1,12 @@
 """Functions to evaluate, infer and defuzzify."""
 
+from collections.abc import Callable
 from math import isinf
 
 from .classes import Domain
 
 
-def round_partial(value, res):
+def round_partial(value: float, res: float) -> float:
     """
     Round any value to any arbitrary precision.
 
@@ -30,7 +31,9 @@ def round_partial(value, res):
     return value if res == 0 or isinf(res) else round(value / res) * res
 
 
-def rescale(out_min, out_max, *, in_min=0, in_max=1):
+def rescale(
+    out_min: float, out_max: float, *, in_min: float = 0, in_max: float = 1
+) -> Callable[[float], float]:
     """Scale from one domain to another.
 
     Tests only cover scaling from [0,1] (with default in_min, in_max!)
@@ -56,13 +59,13 @@ def rescale(out_min, out_max, *, in_min=0, in_max=1):
     n = a * d
     o = b * c
 
-    def f(x):
+    def f(x: float) -> float:
         return (n - a * x - o + b * x) / m
 
     return f
 
 
-def weighted_sum(*, weights: dict, target_d: Domain):
+def weighted_sum(*, weights: dict[str, float], target_d: Domain) -> Callable[[dict[str, float]], float]:
     """Used for weighted decision trees and such.
 
     Parametrize with dict of factorname -> weight and domain of results.
@@ -75,10 +78,10 @@ def weighted_sum(*, weights: dict, target_d: Domain):
     """
     assert sum(weights.values()) == 1, breakpoint()
 
-    rsc = rescale(target_d._low, target_d._high)
+    rsc = rescale(target_d.low, target_d.high)
 
-    def f(memberships):
+    def f(memberships: dict[str, float]) -> float:
         result = sum(r * weights[n] for n, r in memberships.items())
-        return round_partial(rsc(result), target_d._res)
+        return round_partial(rsc(result), target_d.res)
 
     return f

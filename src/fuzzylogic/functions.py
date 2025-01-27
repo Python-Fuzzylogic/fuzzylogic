@@ -28,15 +28,17 @@ In a fuzzy set with one and only one m == 1, this element is called 'prototype'.
 
 from collections.abc import Callable
 from math import exp, isinf, isnan, log
-from typing import Any, Optional
+from typing import Any
+
+type Membership = Callable[[float], float]
 
 try:
-    raise ImportError
     # from numba import njit # still not ready for prime time :(
+    raise ImportError
 
 except ImportError:
 
-    def njit(func: Callable) -> Callable:
+    def njit(func: Membership) -> Membership:
         return func
 
 
@@ -44,34 +46,32 @@ except ImportError:
 # SPECIAL FUNCTIONS #
 #####################
 
-type Number = int | float
 
-
-def inv(g: Callable[[Number], Number]) -> Callable:
+def inv(g: Membership) -> Membership:
     """Invert the given function within the unit-interval.
 
     For sets, the ~ operator uses this. It is equivalent to the TRUTH value of FALSE.
     """
 
-    def f(x: Number) -> float:
+    def f(x: float) -> float:
         return float(1 - g(x))
 
     return f
 
 
-def noop() -> Callable:
+def noop() -> Membership:
     """Do nothing and return the value as is.
 
     Useful for testing.
     """
 
-    def f(x: Number) -> Number:
+    def f(x: float) -> float:
         return x
 
     return f
 
 
-def constant(c: Number) -> Callable:
+def constant(c: float) -> Membership:
     """Return always the same value, no matter the input.
 
     Useful for testing.
@@ -80,7 +80,7 @@ def constant(c: Number) -> Callable:
     1
     """
 
-    def f(_: Any) -> Number:
+    def f(_: float) -> float:
         return c
 
     return f
@@ -88,12 +88,12 @@ def constant(c: Number) -> Callable:
 
 def alpha(
     *,
-    floor: Number = 0,
-    ceiling: Number = 1,
-    func: Callable,
-    floor_clip: Optional[Number] = None,
-    ceiling_clip: Optional[Number] = None,
-):
+    floor: float = 0,
+    ceiling: float = 1,
+    func: Membership,
+    floor_clip: float | None = None,
+    ceiling_clip: float | None = None,
+) -> Membership:
     """Clip a function's values.
 
     This is used to either cut off the upper or lower part of a graph.
@@ -107,7 +107,7 @@ def alpha(
     ceiling_clip = ceiling if ceiling_clip is None else ceiling_clip
     # assert 0 <= floor_clip <= ceiling_clip <= 1, "%s <= %s"%(floor_clip, ceiling_clip)
 
-    def f(x: Number) -> float:
+    def f(x: float) -> float:
         m = func(x)
         if m >= ceiling:
             return ceiling_clip
@@ -119,23 +119,23 @@ def alpha(
     return f
 
 
-def normalize(height: Number, func: Callable) -> Callable:
+def normalize(height: float, func: Callable[[float], float]) -> Callable[[float], float]:
     """Map [0,1] to [0,1] so that max(array) == 1."""
     assert 0 < height <= 1
 
-    def f(x: Number) -> float:
+    def f(x: float) -> float:
         return func(x) / height
 
     return f
 
 
-def moderate(func: Callable) -> Callable:
+def moderate(func: Callable[[float], float]) -> Callable[[float], float]:
     """Map [0,1] -> [0,1] with bias towards 0.5.
 
     For instance this is needed to dampen extremes.
     """
 
-    def f(x: Number) -> float:
+    def f(x: float) -> float:
         return 1 / 2 + 4 * (func(x) - 1 / 2) ** 3
 
     return f
@@ -146,7 +146,7 @@ def moderate(func: Callable) -> Callable:
 ########################
 
 
-def singleton(p: Number, *, no_m: Number = 0, c_m: Number = 1):
+def singleton(p: float, *, no_m: float = 0, c_m: float = 1) -> Membership:
     """A single spike.
 
     >>> f = singleton(2)
@@ -157,13 +157,13 @@ def singleton(p: Number, *, no_m: Number = 0, c_m: Number = 1):
     """
     assert 0 <= no_m < c_m <= 1
 
-    def f(x: Number) -> Number:
+    def f(x: float) -> float:
         return c_m if x == p else no_m
 
     return f
 
 
-def linear(m: Number = 0, b: Number = 0) -> Callable:
+def linear(m: float = 0, b: float = 0) -> Membership:
     """A textbook linear function with y-axis section and gradient.
 
     f(x) = m*x + b
@@ -184,7 +184,7 @@ def linear(m: Number = 0, b: Number = 0) -> Callable:
     1
     """
 
-    def f(x: Number) -> Number:
+    def f(x: float) -> float:
         y = m * x + b
         if y <= 0:
             return 0
@@ -196,7 +196,7 @@ def linear(m: Number = 0, b: Number = 0) -> Callable:
     return f
 
 
-def step(limit: Number, /, *, left: Number = 0, right: Number = 1, at_lmt: Number | None = None) -> Callable:
+def step(limit: float, /, *, left: float = 0, right: float = 1, at_lmt: float | None = None) -> Membership:
     """A step function.
 
     Coming from left, the function returns the *left* argument.
@@ -212,7 +212,7 @@ def step(limit: Number, /, *, left: Number = 0, right: Number = 1, at_lmt: Numbe
     """
     assert 0 <= left <= 1 and 0 <= right <= 1
 
-    def f(x: Number) -> Number:
+    def f(x: float) -> float:
         if x < limit:
             return left
         elif x > limit:
@@ -224,8 +224,8 @@ def step(limit: Number, /, *, left: Number = 0, right: Number = 1, at_lmt: Numbe
 
 
 def bounded_linear(
-    low: Number, high: Number, *, c_m: Number = 1, no_m: Number = 0, inverse=False
-) -> Callable:
+    low: float, high: float, *, c_m: float = 1, no_m: float = 0, inverse: bool = False
+) -> Membership:
     """Variant of the linear function with gradient being determined by bounds.
 
     The bounds determine minimum and maximum value-mappings,
@@ -265,7 +265,7 @@ def bounded_linear(
     if gradient == 0:
         return g_0
 
-    def g_inf(x: Number) -> float:
+    def g_inf(x: float) -> float:
         asymptode = (high + low) / 2
         if x < asymptode:
             return no_m
@@ -277,7 +277,7 @@ def bounded_linear(
     if isinf(gradient):
         return g_inf
 
-    def f(x: Number) -> float:
+    def f(x: float) -> float:
         y = gradient * (x - low) + no_m
         if y < 0:
             return 0.0
@@ -286,7 +286,7 @@ def bounded_linear(
     return f
 
 
-def R(low: Number, high: Number) -> Callable:
+def R(low: float, high: float) -> Membership:
     """Simple alternative for bounded_linear().
 
     THIS FUNCTION ONLY CAN HAVE A POSITIVE SLOPE -
@@ -294,7 +294,7 @@ def R(low: Number, high: Number) -> Callable:
     """
     assert low < high, f"{low} < {high} is not true."
 
-    def f(x: Number) -> float:
+    def f(x: float) -> float:
         if x < low or isinf(high - low):
             return 0
         elif low <= x <= high:
@@ -305,7 +305,7 @@ def R(low: Number, high: Number) -> Callable:
     return f
 
 
-def S(low: Number, high: Number) -> Callable:
+def S(low: float, high: float) -> Membership:
     """Simple alternative for bounded_linear.
 
     THIS FUNCTION ONLY CAN HAVE A NEGATIVE SLOPE -
@@ -313,7 +313,7 @@ def S(low: Number, high: Number) -> Callable:
     """
     assert low < high, f"{low} must be less than {high}."
 
-    def f(x: Number) -> float:
+    def f(x: float) -> float:
         if x <= low:
             return 1
         elif low < x < high:
@@ -325,7 +325,7 @@ def S(low: Number, high: Number) -> Callable:
     return f
 
 
-def rectangular(low: Number, high: Number, *, c_m: Number = 1, no_m: Number = 0) -> Callable:
+def rectangular(low: float, high: float, *, c_m: float = 1, no_m: float = 0) -> Membership:
     """Basic rectangular function that returns the core_y for the core else 0.
 
         ______
@@ -334,13 +334,15 @@ def rectangular(low: Number, high: Number, *, c_m: Number = 1, no_m: Number = 0)
     """
     assert low < high, f"{low}, {high}"
 
-    def f(x: Number) -> Number:
+    def f(x: float) -> float:
         return no_m if x < low or high < x else c_m
 
     return f
 
 
-def triangular(low: Number, high: Number, *, c: Number | None = None, c_m: Number = 1, no_m: Number = 0):
+def triangular(
+    low: float, high: float, *, c: float | None = None, c_m: float = 1, no_m: float = 0
+) -> Membership:
     r"""Basic triangular norm as combination of two linear functions.
 
          /\
@@ -356,13 +358,15 @@ def triangular(low: Number, high: Number, *, c: Number | None = None, c_m: Numbe
     left_slope = bounded_linear(low, c, no_m=0, c_m=c_m)
     right_slope = inv(bounded_linear(c, high, no_m=0, c_m=c_m))
 
-    def f(x: Number) -> Number:
+    def f(x: float) -> float:
         return left_slope(x) if x <= c else right_slope(x)
 
     return f
 
 
-def trapezoid(low: Number, c_low: Number, c_high: Number, high: Number, *, c_m: Number = 1, no_m: Number = 0):
+def trapezoid(
+    low: float, c_low: float, c_high: float, high: float, *, c_m: float = 1, no_m: float = 0
+) -> Membership:
     r"""Combination of rectangular and triangular, for convenience.
 
           ____
@@ -376,7 +380,7 @@ def trapezoid(low: Number, c_low: Number, c_high: Number, high: Number, *, c_m: 
     left_slope = bounded_linear(low, c_low, c_m=c_m, no_m=no_m)
     right_slope = bounded_linear(c_high, high, c_m=c_m, no_m=no_m, inverse=True)
 
-    def f(x: Number) -> Number:
+    def f(x: float) -> float:
         if x < low or high < x:
             return no_m
         elif x < c_low:
@@ -389,7 +393,7 @@ def trapezoid(low: Number, c_low: Number, c_high: Number, high: Number, *, c_m: 
     return f
 
 
-def sigmoid(L: Number, k: Number, x0: Number = 0):
+def sigmoid(L: float, k: float, x0: float = 0) -> Membership:
     """Special logistic function.
 
     http://en.wikipedia.org/wiki/Logistic_function
@@ -403,7 +407,7 @@ def sigmoid(L: Number, k: Number, x0: Number = 0):
     # need to be really careful here, otherwise we end up in nanland
     assert 0 < L <= 1, "L invalid."
 
-    def f(x: Number) -> float:
+    def f(x: float) -> float:
         if isnan(k * x):
             # e^(0*inf) = 1
             o = 1.0
@@ -417,7 +421,7 @@ def sigmoid(L: Number, k: Number, x0: Number = 0):
     return f
 
 
-def bounded_sigmoid(low: Number, high: Number, inverse=False):
+def bounded_sigmoid(low: float, high: float, inverse: bool = False) -> Membership:
     """
     Calculate a weight based on the sigmoid function.
 
@@ -473,7 +477,7 @@ def bounded_sigmoid(low: Number, high: Number, inverse=False):
     except OverflowError:
         p = float("inf")
 
-    def f(x: Number) -> float:
+    def f(x: float) -> float:
         try:
             # e^(0*inf) = 1 for both -inf and +inf
             q = 1.0 if (isinf(k) and x == 0) or (k == 0 and isinf(x)) else exp(x * k)
@@ -489,7 +493,7 @@ def bounded_sigmoid(low: Number, high: Number, inverse=False):
     return f
 
 
-def bounded_exponential(k: Number = 0.1, limit: Number = 1):
+def bounded_exponential(k: float = 0.1, limit: float = 1) -> Membership:
     """Function that goes through the origin and approaches a limit.
     k determines the steepness. The function defined for [0, +inf).
     Useful for things that can't be below 0 but may not have a limit like temperature
@@ -501,7 +505,7 @@ def bounded_exponential(k: Number = 0.1, limit: Number = 1):
     assert limit > 0
     assert k > 0
 
-    def f(x: Number) -> float:
+    def f(x: float) -> float:
         try:
             return limit - limit / exp(k * x)
         except OverflowError:
@@ -510,7 +514,7 @@ def bounded_exponential(k: Number = 0.1, limit: Number = 1):
     return f
 
 
-def simple_sigmoid(k: Number = 0.229756):
+def simple_sigmoid(k: float = 0.229756) -> Membership:
     """Sigmoid variant with only one parameter (steepness).
 
     The midpoint is 0.
@@ -529,7 +533,7 @@ def simple_sigmoid(k: Number = 0.229756):
     0.99
     """
 
-    def f(x: Number) -> float:
+    def f(x: float) -> float:
         if isinf(x) and k == 0:
             return 1 / 2
         try:
@@ -540,7 +544,7 @@ def simple_sigmoid(k: Number = 0.229756):
     return f
 
 
-def triangular_sigmoid(low: Number, high: Number, c: Number | None = None):
+def triangular_sigmoid(low: float, high: float, c: float | None = None) -> Membership:
     """Version of triangular using sigmoids instead of linear.
 
     THIS FUNCTION PEAKS AT 0.9
@@ -556,17 +560,15 @@ def triangular_sigmoid(low: Number, high: Number, c: Number | None = None):
     assert low < c < high, "c must be inbetween"
 
     left_slope = bounded_sigmoid(low, c)
-    "float"
     right_slope = inv(bounded_sigmoid(c, high))
-    "float"
 
-    def f(x: Number) -> float:
+    def f(x: float) -> float:
         return left_slope(x) if x <= c else right_slope(x)
 
     return f
 
 
-def gauss(c: Number, b: Number, *, c_m: Number = 1) -> Callable:
+def gauss(c: float, b: float, *, c_m: float = 1) -> Membership:
     """Defined by ae^(-b(x-x0)^2), a gaussian distribution.
 
     Basically a triangular sigmoid function, it comes close to human perception.
@@ -583,7 +585,7 @@ def gauss(c: Number, b: Number, *, c_m: Number = 1) -> Callable:
     assert 0 < c_m <= 1
     assert 0 < b, "b must be greater than 0"
 
-    def f(x: Number) -> float:
+    def f(x: float) -> float:
         try:
             o = (x - c) ** 2
         except OverflowError:
