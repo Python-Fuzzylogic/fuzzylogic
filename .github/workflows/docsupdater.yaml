@@ -1,25 +1,29 @@
 name: Update docs/docs/index.md
-on: push
-permissions:
-  pull-requests: write
-  contents: write 
-  repository-projects: write
+
+on:
+  push:
+    branches:
+      - master
 
 jobs:
   update-docs:
     runs-on: ubuntu-latest
+
     steps:
-      - uses: actions/checkout@v2
-      - name: Update docs/docs/index.md
-        run: |
-          echo "Generating docs/docs/index.md..."
-          cat README.md > docs/docs/index.md
-      - name: Commit and push changes
-        run: |
-          git config --global user.name "coderatul"
-          git config --global user.email "atulkushwaha2008@gmail.com"
-          git add docs/docs/index.md
+    - name: Checkout repository
+      uses: actions/checkout@v2
+
+    - name: Generate docs/docs/index.md
+      run: |
+        echo "Generating docs/docs/index.md..."
+        cat README.md > docs/docs/index.md
+
+    - name: Commit changes
+      run: |
+        git add docs/docs/index.md
+        if [ -n "$(git status --porcelain)" ]; then
           git commit -m "Update docs/docs/index.md"
           git push
-
-    
+        else
+          echo "No changes to commit"
+        fi
