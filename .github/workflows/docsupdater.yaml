@@ -9,7 +9,7 @@ jobs:
   update-docs:
     runs-on: ubuntu-latest
 
-    steps:z
+    steps:
     - name: Checkout repository
       uses: actions/checkout@v2
 
