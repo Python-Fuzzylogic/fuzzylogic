@@ -74,9 +74,10 @@ def MAX(*guncs: Membership) -> Membership:
 def product(*guncs: Membership) -> Membership:
     """AND variant."""
     funcs = list(guncs)
+    epsilon = 1e-10  # Small value to prevent underflow
 
     def F(z: float) -> float:
-        return reduce(multiply, (f(z) for f in funcs))
+        return reduce(multiply, (max(f(z), epsilon) for f in funcs))
 
     return F
 
@@ -238,6 +239,7 @@ def simple_disjoint_sum(*funcs: Membership) -> Membership:  # sourcery skip: unw
     Basic idea:
     (A AND ~B) OR (~A AND B)
 
+    >>> from .functions import noop
     >>> xor = simple_disjoint_sum(noop(), noop())
     >>> xor(0)
     0

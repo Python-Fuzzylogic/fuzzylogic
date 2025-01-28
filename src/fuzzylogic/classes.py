@@ -89,11 +89,11 @@ class Domain:
         self._res = res
         self._sets = {} if sets is None else sets  # Name: Set(Function())
 
-    def __call__(self, x: float) -> dict[str, float]:
+    def __call__(self, x: float) -> dict[Set, float]:
         """Pass a value to all sets of the domain and return a dict with results."""
         if not (self._low <= x <= self._high):
             raise FuzzyWarning(f"{x} is outside of domain!")
-        return {name: s.func(x) for name, s in self._sets.items()}
+        return {self._sets[name]: s.func(x) for name, s in self._sets.items()}
 
     def __len__(self) -> int:
         """Return the size of the domain, as the actual number of possible values, calculated internally."""
@@ -423,19 +423,18 @@ class Set:
         """
 
         # experimental
-        # x = f"{self.func.__qualname__.split('.')[0]}({self.func.__closure__[0].
-        # cell_contents.__code__.co_nlocals}))"
+        # x = f"{self.func.__qualname__.split('.')[0]}({self.func.__closure__[0].cell_contents.__code__.co_nlocals}))"  # noqa: E501
         # print(x)
 
         if self.domain is not None:
             return f"{self.domain._name}.{self.name}"  # type: ignore
-        return f"Set({__name__}({self.func.__qualname__})"
+        return f"Set(({self.func.__qualname__})"
 
     def __str__(self) -> str:
         """Return a string for print()."""
         if self.domain is not None:
             return f"{self.domain._name}.{self.name}"  # type: ignore
-        return f"dangling Set({self.func.__name__}"
+        return f"Set({self.func.__name__})"
 
     def normalized(self) -> Set:
         """Return a set that is normalized *for this domain* with 1 as max."""
