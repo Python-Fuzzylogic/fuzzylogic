@@ -10,16 +10,16 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
+      - name: Set up Git
+        run: |
+          git config --global user.name "Anselm Kiefner"
+          git config --global user.email "fuzzylogic-github@anselm.kiefner.de"
       - name: Update docs/docs/index.md
         run: |
           echo "Generating docs/docs/index.md..."
           cat README.md > docs/docs/index.md
       - name: Commit and push changes
         run: |
-          git config --global user.name "coderatul"
-          git config --global user.email "atulkushwaha2008@gmail.com"
           git add docs/docs/index.md
           git commit -m "Update docs/docs/index.md"
           git push
-
-    
