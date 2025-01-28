@@ -18,11 +18,23 @@ import sys
 from itertools import permutations
 from random import choice, randint
 from statistics import median
-from typing import Callable
 
 import numpy as np
 
-from .functions import R, S, constant, gauss, rectangular, sigmoid, singleton, step, trapezoid, triangular
+from .classes import Array
+from .functions import (
+    Membership,
+    R,
+    S,
+    constant,
+    gauss,
+    rectangular,
+    sigmoid,
+    singleton,
+    step,
+    trapezoid,
+    triangular,
+)
 
 np.seterr(all="raise")
 functions = [step, rectangular]
@@ -33,13 +45,13 @@ argument3_functions = [triangular, sigmoid]
 argument4_functions = [trapezoid]
 
 
-def normalize(target: np.ndarray, output_length: int = 16) -> np.ndarray:
+def normalize(target: Array, output_length: int = 16) -> Array:
     """Normalize and interpolate a numpy array.
 
     Return an array of output_length and normalized values.
     """
-    min_val = np.min(target)
-    max_val = np.max(target)
+    min_val = float(np.min(target))
+    max_val = float(np.max(target))
     if min_val == max_val:
         return np.ones(output_length)
     normalized_array = (target - min_val) / (max_val - min_val)
@@ -49,13 +61,12 @@ def normalize(target: np.ndarray, output_length: int = 16) -> np.ndarray:
     return normalized_array
 
 
-def guess_function(target: np.ndarray) -> Callable:
+def guess_function(target: Array) -> Membership:
     normalized = normalize(target)
-    # trivial case
     return constant if np.all(normalized == 1) else singleton
 
 
-def fitness(func: Callable, target: np.ndarray, certainty: int | None = None) -> float:
+def fitness(func: Membership, target: Array, certainty: int | None = None) -> float:
     """Compute the difference between the array and the function evaluated at the parameters.
 
     if the error is 0, we have a perfect match: fitness -> 1
@@ -66,7 +77,7 @@ def fitness(func: Callable, target: np.ndarray, certainty: int | None = None) ->
     return result if certainty is None else round(result, certainty)
 
 
-def seed_population(func: Callable, target: np.ndarray) -> dict[tuple, float]:
+def seed_population(func: Membership, target: Array) -> dict[tuple, float]:
     # create a random population of parameters
     params = [p for p in inspect.signature(func).parameters.values() if p.kind == p.POSITIONAL_OR_KEYWORD]
     seed_population = {}
@@ -106,7 +117,7 @@ def reproduce(parent1: tuple, parent2: tuple) -> tuple:
 
 
 def guess_parameters(
-    func: Callable, target: np.ndarray, precision: int | None = None, certainty: int | None = None
+    func: Membership, target: Array, precision: int | None = None, certainty: int | None = None
 ) -> tuple:
     """Find the best fitting parameters for a function, targetting an array.
 
@@ -188,7 +199,7 @@ def guess_parameters(
     return best()
 
 
-def shave(target: np.ndarray, components: dict[Callable, tuple]) -> np.ndarray:
+def shave(target: Array, components: dict[Membership, tuple]) -> Array:
     """Remove the membership functions from the target array."""
     result = np.zeros_like(target)
     for func, params in components.items():

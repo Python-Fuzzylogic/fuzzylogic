@@ -13,7 +13,7 @@ from fuzzylogic.rules import weighted_sum
 
 
 @fixture
-def temp():
+def temp() -> Domain:
     d = Domain("temperature", -100, 100, res=0.1)  # in Celsius
     d.cold = S(0, 15)  # sic
     d.hot = Set(R(10, 30))  # sic
@@ -22,24 +22,24 @@ def temp():
 
 
 @fixture
-def simple():
+def simple() -> Domain:
     d = Domain("simple", 0, 10)
     d.low = S(0, 1)
     d.high = R(8, 10)
     return d
 
 
-def test_array(simple):
+def test_array(simple: Domain) -> None:
     assert array_equal(simple.low.array(), [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0])
     assert array_equal(simple.high.array(), [0, 0, 0, 0, 0, 0, 0, 0, 0, 0.5, 1.0])
     assert len(simple.low.array()) == 11  # unlike arrays and lists, upper boundary is INCLUDED
 
 
-def test_value(temp):
+def test_value(temp: Domain) -> None:
     assert temp(6) == {temp.cold: 0.6, temp.hot: 0, temp.warm: 0.4}
 
 
-def test_rating():
+def test_rating() -> None:
     """Tom is surveying restaurants.
     He doesn't need fancy logic but rather uses a simple approach
     with weights.
@@ -61,7 +61,7 @@ def test_rating():
     weights = {"beverage": 0.3, "atmosphere": 0.2, "looks": 0.2, "taste": 0.3}
     w_func = weighted_sum(weights=weights, target_d=R)
 
-    ratings = {
+    ratings: dict[str, float] = {
         "beverage": R.min(9),
         "atmosphere": R.min(5),
         "looks": R.min(4),

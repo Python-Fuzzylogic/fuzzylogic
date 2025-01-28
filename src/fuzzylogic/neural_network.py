@@ -2,6 +2,7 @@ from collections import defaultdict
 
 import numpy as np
 
+from .classes import Array
 from .functions import R, S, constant, gauss, rectangular, sigmoid, singleton, step, trapezoid, triangular
 
 functions = [step, rectangular]
@@ -12,7 +13,7 @@ argument3_functions = [triangular, sigmoid]
 argument4_functions = [trapezoid]
 
 
-def generate_examples() -> dict[str, list[np.ndarray]]:
+def generate_examples() -> dict[str, list[Array]]:
     examples = defaultdict(lambda: [])
     examples["constant"] = [np.ones(16)]
     for x in range(16):

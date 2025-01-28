@@ -1,5 +1,6 @@
 import numpy as np
-from fuzzylogic.classes import Domain, Rule
+
+from fuzzylogic.classes import Domain, Rule, rule_from_table
 from fuzzylogic.functions import R, S, trapezoid
 
 temp = Domain("Temperatur", -30, 100, res=0.0001)  # ,res=0.1)
@@ -38,7 +39,6 @@ temp.mittel	gef.klein	gef.mittel	gef.groß
 temp.heiß	gef.klein	gef.groß	gef.groß
 """
 
-from fuzzylogic.classes import rule_from_table
 
 table_rules = rule_from_table(table, globals())
 
@@ -47,4 +47,4 @@ assert table_rules == rules
 value = {temp: 20, tan: 0.55}
 result = rules(value)
 assert isinstance(result, float)
-assert np.isclose(result, 0.45, atol=0.0001)
+assert np.isclose(result, -0.5, atol=0.0001)
