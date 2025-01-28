@@ -509,7 +509,7 @@ def bounded_exponential(k: float = 0.1, limit: float = 1) -> Membership:
         try:
             return limit - limit / exp(k * x)
         except OverflowError:
-            return float(limit)
+            return limit
 
     return f
 

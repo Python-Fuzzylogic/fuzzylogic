@@ -14,7 +14,7 @@ argument4_functions = [trapezoid]
 
 
 def generate_examples() -> dict[str, list[Array]]:
-    examples = defaultdict(lambda: [])
+    examples: dict[str, list[Array]] = defaultdict(lambda: [])
     examples["constant"] = [np.ones(16)]
     for x in range(16):
         A = np.zeros(16)
@@ -23,5 +23,5 @@ def generate_examples() -> dict[str, list[Array]]:
 
     for x in range(1, 16):
         func = R(0, x)
-        examples["R"].append(func(np.linspace(0, 1, 16)))
+        examples["R"].append(func(np.linspace(0, 1, 16)))  # type: ignore
     return examples

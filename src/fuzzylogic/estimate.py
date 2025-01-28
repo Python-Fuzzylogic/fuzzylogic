@@ -15,9 +15,11 @@ How this works:
 import contextlib
 import inspect
 import sys
+from collections.abc import Callable
 from itertools import permutations
 from random import choice, randint
 from statistics import median
+from typing import Any
 
 import numpy as np
 
@@ -35,6 +37,8 @@ from .functions import (
     trapezoid,
     triangular,
 )
+
+type MembershipSetup = Callable[[Any], Membership]
 
 np.seterr(all="raise")
 functions = [step, rectangular]
@@ -61,7 +65,7 @@ def normalize(target: Array, output_length: int = 16) -> Array:
     return normalized_array
 
 
-def guess_function(target: Array) -> Membership:
+def guess_function(target: Array) -> MembershipSetup:
     normalized = normalize(target)
     return constant if np.all(normalized == 1) else singleton
 
@@ -77,11 +81,11 @@ def fitness(func: Membership, target: Array, certainty: int | None = None) -> fl
     return result if certainty is None else round(result, certainty)
 
 
-def seed_population(func: Membership, target: Array) -> dict[tuple, float]:
+def seed_population(func: MembershipSetup, target: Array) -> dict[tuple[float, ...], float]:
     # create a random population of parameters
     params = [p for p in inspect.signature(func).parameters.values() if p.kind == p.POSITIONAL_OR_KEYWORD]
-    seed_population = {}
-    seed_numbers = [
+    seed_population: dict[tuple[float, ...], float] = {}
+    seed_numbers: list[float] = [
         sys.float_info.min,
         sys.float_info.max,
         0,
@@ -91,7 +95,7 @@ def seed_population(func: Membership, target: Array) -> dict[tuple, float]:
         -0.5,
         min(target),
         max(target),
-        np.argmax(target),
+        float(np.argmax(target)),
     ]
     # seed population
     for combination in permutations(seed_numbers, len(params)):
@@ -101,35 +105,41 @@ def seed_population(func: Membership, target: Array) -> dict[tuple, float]:
     return seed_population
 
 
-def reproduce(parent1: tuple, parent2: tuple) -> tuple:
-    child = []
+def reproduce(parent1: tuple[float, ...], parent2: tuple[float, ...]) -> tuple[float, ...]:
+    child: list[float] = []
     for p1, p2 in zip(parent1, parent2):
         # mix the parts of the floats by randomness within the range of the parents
         # adding a random jitter should avoid issues when p1 == p2
         a1, a2 = np.frexp(p1)
         b1, b2 = np.frexp(p2)
+        a1 = float(a1)
+        b1 = float(b1)
+        a2 = float(a2)
+        b2 = float(b2)
         a1 += randint(-1, 1)
         a2 += randint(-1, 1)
         b1 += randint(-1, 1)
         b2 += randint(-1, 1)
-        child.append(((a1 + b1) / 2) * 2 ** np.random.uniform(a2, b2))
+        child.append(float((a1 + b1) / 2) * 2 ** np.random.uniform(a2, b2))
     return tuple(child)
 
 
 def guess_parameters(
-    func: Membership, target: Array, precision: int | None = None, certainty: int | None = None
-) -> tuple:
-    """Find the best fitting parameters for a function, targetting an array.
+    func: MembershipSetup, target: Array, precision: int | None = None, certainty: int | None = None
+) -> tuple[float, ...]:
+    """Find the best fitting parameters for a function, targeting an array.
 
     Args:
-        func (Callable): A possibly matching membership function, such as `fuzzylogic.functions.triangular`.
-        array (np.ndarray): The target array to fit the function to.
+        func (MembershipSetup): A possibly matching membership function.
+        target (Array): The target array to fit the function to.
+        precision (int | None): The precision of the parameters.
+        certainty (int | None): The certainty of the fitness score.
 
     Returns:
-        tuple: The best fitting parameters for the function.
+        tuple[float, ...]: The best fitting parameters for the function.
     """
 
-    def best() -> tuple:
+    def best() -> tuple[float, ...]:
         return sorted(population.items(), key=lambda x: x[1])[0][0]
 
     seed_pop = seed_population(func, target)
@@ -141,9 +151,9 @@ def guess_parameters(
     last_pop = {}
     for generation in range(12):
         # sort the population by fitness
-        pop: list[tuple[tuple, float]] = sorted(population.items(), key=lambda x: x[1], reverse=True)[
-            :pop_size
-        ]
+        pop: list[tuple[tuple[float, ...], float]] = sorted(
+            population.items(), key=lambda x: x[1], reverse=True
+        )[:pop_size]
         if not pop:
             population = last_pop
             return best()
@@ -153,7 +163,7 @@ def guess_parameters(
             print("Lucky!")
             return best()
         # the next generation
-        new_population = {}
+        new_population: dict[tuple[float, ...], float] = {}
         killed = 0
         for parent1 in pop:
             while True:
@@ -195,14 +205,14 @@ def guess_parameters(
             pressure **= 0.999
             population |= seed_pop
         else:
-            pressure = median([x[1] for x in population.items()])
+            pressure: float = median([x[1] for x in population.items()])
     return best()
 
 
-def shave(target: Array, components: dict[Membership, tuple]) -> Array:
+def shave(target: Array, components: dict[Membership, tuple[float, ...]]) -> Array:
     """Remove the membership functions from the target array."""
-    result = np.zeros_like(target)
+    result: Array = np.zeros_like(target, dtype=float)
     for func, params in components.items():
         f = func(*params)
-        result += np.fromiter([f(x) for x in np.arange(*target.shape)], float)
-    return target - result
+        result += np.fromiter((f(x) for x in np.arange(*target.shape)), dtype=float)  # type: ignore
+    return np.asarray(target - result, dtype=target.dtype)  # type: ignore
