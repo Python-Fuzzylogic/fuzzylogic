@@ -14,40 +14,37 @@ from fuzzylogic.classes import Domain, Set
 
 version = (0, 1, 1, 4)
 
+# Common settings for all tests
+common_settings = settings(deadline=None, suppress_health_check=cast(list[HealthCheck], list(HealthCheck)))
+
 
 class Test_Functions(TestCase):
-    @settings(deadline=None, suppress_health_check=cast(list[HealthCheck], list(HealthCheck)))
+    @common_settings
     @given(st.floats(allow_nan=False))
     def test_noop(self, x: float) -> None:
         f = fun.noop()
         assert f(x) == x
 
-    @settings(deadline=None, suppress_health_check=cast(list[HealthCheck], list(HealthCheck)))
+    @common_settings
     @given(st.floats(allow_nan=False, allow_infinity=False))
     def test_inv(self, x: float) -> None:
         assume(0 <= x <= 1)
         f = fun.inv(fun.noop())
         assert isclose(f(f(x)), x, abs_tol=1e-16)
 
-    @settings(deadline=None, suppress_health_check=cast(list[HealthCheck], list(HealthCheck)))
-    @given(
-        st.floats(allow_nan=False, allow_infinity=False),
-        st.floats(allow_nan=False, allow_infinity=False),
-    )
+    @common_settings
+    @given(st.floats(allow_nan=False, allow_infinity=False), st.floats(allow_nan=False, allow_infinity=False))
     def test_constant(self, x: float, c: float) -> None:
         f = fun.constant(c)
         assert f(x) == c
 
-    @settings(deadline=None, suppress_health_check=cast(list[HealthCheck], list(HealthCheck)))
+    @common_settings
     @given(
-        st.floats(allow_nan=False),
-        st.floats(min_value=0, max_value=1),
-        st.floats(min_value=0, max_value=1),
+        st.floats(allow_nan=False), st.floats(min_value=0, max_value=1), st.floats(min_value=0, max_value=1)
     )
     def test_alpha(self, x: float, lower: float, upper: float) -> None:
         assume(lower < upper)
         f = fun.alpha(floor=lower, ceiling=upper, func=fun.noop())
-        # sourcery skip: no-conditionals-in-tests
         if x <= lower:
             assert f(x) == lower
         elif x >= upper:
@@ -55,7 +52,7 @@ class Test_Functions(TestCase):
         else:
             assert f(x) == x
 
-    @settings(deadline=None, suppress_health_check=cast(list[HealthCheck], list(HealthCheck)))
+    @common_settings
     @given(
         st.floats(allow_nan=False),
         st.floats(min_value=0, max_value=1),
@@ -67,44 +64,34 @@ class Test_Functions(TestCase):
         self, x: float, floor: float, ceil: float, floor_clip: float | None, ceil_clip: float | None
     ) -> None:
         assume(floor < ceil)
-        # sourcery skip: no-conditionals-in-tests
         if floor_clip is not None and ceil_clip is not None:
             assume(floor_clip < ceil_clip)
         f = fun.alpha(
-            floor=floor,
-            ceiling=ceil,
-            func=fun.noop(),
-            floor_clip=floor_clip,
-            ceiling_clip=ceil_clip,
+            floor=floor, ceiling=ceil, func=fun.noop(), floor_clip=floor_clip, ceiling_clip=ceil_clip
         )
         assert 0 <= f(x) <= 1
 
-    @settings(deadline=None, suppress_health_check=cast(list[HealthCheck], list(HealthCheck)))
+    @common_settings
     @given(st.floats(allow_nan=False), st.floats(min_value=0, max_value=1))
     def test_normalize(self, x: float, height: float) -> None:
         assume(height > 0)
         f = fun.normalize(height, fun.alpha(ceiling=height, func=fun.R(0, 100)))
         assert 0 <= f(x) <= 1
 
-    @settings(deadline=None, suppress_health_check=cast(list[HealthCheck], list(HealthCheck)))
+    @common_settings
     @given(st.floats(min_value=0, max_value=1))
     def test_moderate(self, x: float) -> None:
         f = fun.moderate(fun.noop())
         assert 0 <= f(x) <= 1
 
-    @settings(deadline=None, suppress_health_check=cast(list[HealthCheck], list(HealthCheck)))
-    @given(
-        st.floats(),
-        st.floats(),
-        st.floats(min_value=0, max_value=1),
-        st.floats(min_value=0, max_value=1),
-    )
+    @common_settings
+    @given(st.floats(), st.floats(), st.floats(min_value=0, max_value=1), st.floats(min_value=0, max_value=1))
     def test_singleton(self, x: float, c: float, no_m: float, c_m: float) -> None:
         assume(0 <= no_m < c_m <= 1)
         f = fun.singleton(c, no_m=no_m, c_m=c_m)
         assert f(x) == (c_m if x == c else no_m)
 
-    @settings(deadline=None, suppress_health_check=cast(list[HealthCheck], list(HealthCheck)))
+    @common_settings
     @given(
         st.floats(allow_nan=False, allow_infinity=False),
         st.floats(allow_nan=False, allow_infinity=False),
@@ -114,7 +101,7 @@ class Test_Functions(TestCase):
         f = fun.linear(m, b)
         assert 0 <= f(x) <= 1
 
-    @settings(deadline=None, suppress_health_check=cast(list[HealthCheck], list(HealthCheck)))
+    @common_settings
     @given(
         st.floats(allow_nan=False),
         st.floats(allow_nan=False, allow_infinity=False),
@@ -128,9 +115,9 @@ class Test_Functions(TestCase):
         f = fun.bounded_linear(low, high, c_m=c_m, no_m=no_m)
         assert 0 <= f(x) <= 1
 
-    @settings(deadline=None, suppress_health_check=cast(list[HealthCheck], list(HealthCheck)))
+    @common_settings
     @given(
-        st.floats(allow_nan=False),
+        st.floats(allow_nan=False, allow_infinity=False),
         st.floats(allow_nan=False, allow_infinity=False),
         st.floats(allow_nan=False, allow_infinity=False),
     )
@@ -139,9 +126,9 @@ class Test_Functions(TestCase):
         f = fun.R(low, high)
         assert 0 <= f(x) <= 1
 
-    @settings(deadline=None, suppress_health_check=cast(list[HealthCheck], list(HealthCheck)))
+    @common_settings
     @given(
-        st.floats(allow_nan=False),
+        st.floats(allow_nan=False, allow_infinity=False),
         st.floats(allow_nan=False, allow_infinity=False),
         st.floats(allow_nan=False, allow_infinity=False),
     )
@@ -150,7 +137,7 @@ class Test_Functions(TestCase):
         f = fun.S(low, high)
         assert 0 <= f(x) <= 1
 
-    @settings(deadline=None, suppress_health_check=cast(list[HealthCheck], list(HealthCheck)))
+    @common_settings
     @given(
         st.floats(allow_nan=False),
         st.floats(allow_nan=False, allow_infinity=False),
@@ -163,7 +150,7 @@ class Test_Functions(TestCase):
         f = fun.rectangular(low, high, c_m=c_m, no_m=no_m)
         assert 0 <= f(x) <= 1
 
-    @settings(deadline=None, suppress_health_check=cast(list[HealthCheck], list(HealthCheck)))
+    @common_settings
     @given(
         st.floats(allow_nan=False),
         st.floats(allow_nan=False, allow_infinity=False),
@@ -178,7 +165,7 @@ class Test_Functions(TestCase):
         f = fun.triangular(low, high, c=c, c_m=c_m, no_m=no_m)
         assert 0 <= f(x) <= 1
 
-    @settings(deadline=None, suppress_health_check=cast(list[HealthCheck], list(HealthCheck)))
+    @common_settings
     @given(
         st.floats(allow_nan=False),
         st.floats(allow_nan=False, allow_infinity=False),
@@ -196,7 +183,7 @@ class Test_Functions(TestCase):
         f = fun.trapezoid(low, c_low, c_high, high, c_m=c_m, no_m=no_m)
         assert 0 <= f(x) <= 1
 
-    @settings(deadline=None, suppress_health_check=cast(list[HealthCheck], list(HealthCheck)))
+    @common_settings
     @given(
         st.floats(allow_nan=False),
         st.floats(min_value=0, max_value=1),
@@ -208,7 +195,7 @@ class Test_Functions(TestCase):
         f = fun.sigmoid(L, k, x0)
         assert 0 <= f(x) <= 1
 
-    @settings(deadline=None, suppress_health_check=cast(list[HealthCheck], list(HealthCheck)))
+    @common_settings
     @given(
         st.floats(allow_nan=False),
         st.floats(allow_nan=False, allow_infinity=False),
@@ -219,13 +206,13 @@ class Test_Functions(TestCase):
         f = fun.bounded_sigmoid(low, high)
         assert 0 <= f(x) <= 1
 
-    @settings(deadline=None, suppress_health_check=cast(list[HealthCheck], list(HealthCheck)))
+    @common_settings
     @given(st.floats(allow_nan=False), st.floats(allow_nan=False, allow_infinity=False))
     def test_simple_sigmoid(self, x: float, k: float) -> None:
         f = fun.simple_sigmoid(k)
         assert 0 <= f(x) <= 1
 
-    @settings(deadline=None, suppress_health_check=cast(list[HealthCheck], list(HealthCheck)))
+    @common_settings
     @given(
         st.floats(allow_nan=False),
         st.floats(allow_nan=False, allow_infinity=False),
@@ -237,7 +224,7 @@ class Test_Functions(TestCase):
         f = fun.triangular(low, high, c=c)
         assert 0 <= f(x) <= 1
 
-    @settings(deadline=None, suppress_health_check=cast(list[HealthCheck], list(HealthCheck)))
+    @common_settings
     @given(
         st.floats(allow_nan=False),
         st.floats(allow_nan=False, allow_infinity=False),
@@ -250,7 +237,7 @@ class Test_Functions(TestCase):
         f = fun.gauss(c, b, c_m=c_m)
         assert 0 <= f(x) <= 1
 
-    @settings(deadline=None, suppress_health_check=cast(list[HealthCheck], list(HealthCheck)))
+    @common_settings
     @given(
         st.floats(allow_nan=False, min_value=0, allow_infinity=False),
         st.floats(allow_nan=False, min_value=0, allow_infinity=False),
@@ -264,21 +251,21 @@ class Test_Functions(TestCase):
 
 
 class Test_Hedges(TestCase):
-    @settings(deadline=None, suppress_health_check=cast(list[HealthCheck], list(HealthCheck)))
+    @common_settings
     @given(st.floats(min_value=0, max_value=1))
     def test_very(self, x: float) -> None:
         s = Set(fun.noop())
         f = hedges.very(s)
         assert 0 <= f(x) <= 1
 
-    @settings(deadline=None, suppress_health_check=cast(list[HealthCheck], list(HealthCheck)))
+    @common_settings
     @given(st.floats(min_value=0, max_value=1))
     def test_minus(self, x: float) -> None:
         s = Set(fun.noop())
         f = hedges.minus(s)
         assert 0 <= f(x) <= 1
 
-    @settings(deadline=None, suppress_health_check=cast(list[HealthCheck], list(HealthCheck)))
+    @common_settings
     @given(st.floats(min_value=0, max_value=1))
     def test_plus(self, x: float) -> None:
         s = Set(fun.noop())
@@ -287,7 +274,7 @@ class Test_Hedges(TestCase):
 
 
 class Test_Combinators(TestCase):
-    @settings(deadline=None, suppress_health_check=cast(list[HealthCheck], list(HealthCheck)))
+    @common_settings
     @given(st.floats(min_value=0, max_value=1))
     def test_MIN(self, x: float) -> None:
         a = fun.noop()
@@ -295,7 +282,7 @@ class Test_Combinators(TestCase):
         f = combi.MIN(a, b)
         assert 0 <= f(x) <= 1
 
-    @settings(deadline=None, suppress_health_check=cast(list[HealthCheck], list(HealthCheck)))
+    @common_settings
     @given(st.floats(min_value=0, max_value=1))
     def test_MAX(self, x: float) -> None:
         a = fun.noop()
@@ -303,7 +290,7 @@ class Test_Combinators(TestCase):
         f = combi.MAX(a, b)
         assert 0 <= f(x) <= 1
 
-    @settings(deadline=None, suppress_health_check=cast(list[HealthCheck], list(HealthCheck)))
+    @common_settings
     @given(st.floats(min_value=0, max_value=1))
     def test_product(self, x: float) -> None:
         a = fun.noop()
@@ -311,7 +298,7 @@ class Test_Combinators(TestCase):
         f = combi.product(a, b)
         assert 0 <= f(x) <= 1
 
-    @settings(deadline=None, suppress_health_check=cast(list[HealthCheck], list(HealthCheck)))
+    @common_settings
     @given(st.floats(min_value=0, max_value=1))
     def test_bounded_sum(self, x: float) -> None:
         a = fun.noop()
@@ -319,7 +306,7 @@ class Test_Combinators(TestCase):
         f = combi.bounded_sum(a, b)
         assert 0 <= f(x) <= 1
 
-    @settings(deadline=None, suppress_health_check=cast(list[HealthCheck], list(HealthCheck)))
+    @common_settings
     @given(st.floats(min_value=0, max_value=1))
     def test_lukasiewicz_AND(self, x: float) -> None:
         a = fun.noop()
@@ -327,7 +314,7 @@ class Test_Combinators(TestCase):
         f = combi.lukasiewicz_AND(a, b)
         assert 0 <= f(x) <= 1
 
-    @settings(deadline=None, suppress_health_check=cast(list[HealthCheck], list(HealthCheck)))
+    @common_settings
     @given(st.floats(min_value=0, max_value=1))
     def test_lukasiewicz_OR(self, x: float) -> None:
         a = fun.noop()
@@ -335,7 +322,7 @@ class Test_Combinators(TestCase):
         f = combi.lukasiewicz_OR(a, b)
         assert 0 <= f(x) <= 1
 
-    @settings(deadline=None, suppress_health_check=cast(list[HealthCheck], list(HealthCheck)))
+    @common_settings
     @given(st.floats(min_value=0, max_value=1))
     def test_einstein_product(self, x: float) -> None:
         a = fun.noop()
@@ -343,7 +330,7 @@ class Test_Combinators(TestCase):
         f = combi.einstein_product(a, b)
         assert 0 <= f(x) <= 1
 
-    @settings(deadline=None, suppress_health_check=cast(list[HealthCheck], list(HealthCheck)))
+    @common_settings
     @given(st.floats(min_value=0, max_value=1))
     def test_einstein_sum(self, x: float) -> None:
         a = fun.noop()
@@ -351,7 +338,7 @@ class Test_Combinators(TestCase):
         f = combi.einstein_sum(a, b)
         assert 0 <= f(x) <= 1
 
-    @settings(deadline=None, suppress_health_check=cast(list[HealthCheck], list(HealthCheck)))
+    @common_settings
     @given(st.floats(min_value=0, max_value=1))
     def test_hamacher_product(self, x: float) -> None:
         a = fun.noop()
@@ -359,7 +346,7 @@ class Test_Combinators(TestCase):
         f = combi.hamacher_product(a, b)
         assert 0 <= f(x) <= 1
 
-    @settings(deadline=None, suppress_health_check=cast(list[HealthCheck], list(HealthCheck)))
+    @common_settings
     @given(st.floats(min_value=0, max_value=1))
     def test_hamacher_sum(self, x: float) -> None:
         a = fun.noop()
@@ -367,7 +354,7 @@ class Test_Combinators(TestCase):
         f = combi.hamacher_sum(a, b)
         assert 0 <= f(x) <= 1
 
-    @settings(deadline=None, suppress_health_check=cast(list[HealthCheck], list(HealthCheck)))
+    @common_settings
     @given(st.floats(min_value=0, max_value=1), st.floats(min_value=0, max_value=1))
     def test_lambda_op(self, x: float, lambda_: float) -> None:
         a = fun.noop()
@@ -376,7 +363,7 @@ class Test_Combinators(TestCase):
         f = g(a, b)
         assert 0 <= f(x) <= 1
 
-    @settings(deadline=None, suppress_health_check=cast(list[HealthCheck], list(HealthCheck)))
+    @common_settings
     @given(st.floats(min_value=0, max_value=1), st.floats(min_value=0, max_value=1))
     def test_gamma_op(self, x: float, g: float) -> None:
         a = fun.noop()
@@ -385,7 +372,7 @@ class Test_Combinators(TestCase):
         f = G(a, b)
         assert 0 <= f(x) <= 1
 
-    @settings(deadline=None, suppress_health_check=cast(list[HealthCheck], list(HealthCheck)))
+    @common_settings
     @given(st.floats(min_value=0, max_value=1))
     def test_simple_disjoint_sum(self, x: float) -> None:
         a = fun.noop()
@@ -413,7 +400,7 @@ class Test_Domain(TestCase):
 
 
 class Test_Set(TestCase):
-    @settings(deadline=None, suppress_health_check=cast(list[HealthCheck], list(HealthCheck)))
+    @common_settings
     @given(
         st.floats(allow_nan=False, allow_infinity=False),
         st.floats(allow_nan=False, allow_infinity=False),
@@ -455,7 +442,7 @@ class Test_Set(TestCase):
 
 
 class Test_Rules(TestCase):
-    @settings(deadline=None, suppress_health_check=cast(list[HealthCheck], list(HealthCheck)))
+    @common_settings
     @given(
         st.floats(min_value=0, max_value=1),
         st.floats(allow_infinity=False, allow_nan=False),
@@ -476,17 +463,17 @@ class Test_Rules(TestCase):
 
 
 class Test_Truth(TestCase):
-    @settings(deadline=None, suppress_health_check=cast(list[HealthCheck], list(HealthCheck)))
+    @common_settings
     @given(st.floats(min_value=0, max_value=1))
     def test_true_and_false(self, m: float) -> None:
         assert truth.true(m) + truth.false(m) == 1
 
-    @settings(deadline=None, suppress_health_check=cast(list[HealthCheck], list(HealthCheck)))
+    @common_settings
     @given(st.floats(min_value=0, max_value=1))
     def test_very_false_and_fairly_true(self, m: float) -> None:
         assert truth.very_false(m) + truth.fairly_true(m) == 0
 
-    @settings(deadline=None, suppress_health_check=cast(list[HealthCheck], list(HealthCheck)))
+    @common_settings
     @given(st.floats(min_value=0, max_value=1))
     def test_fairly_false_and_very_true(self, m: float) -> None:
         assert truth.fairly_false(m) + truth.very_true(m) == 0
