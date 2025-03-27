@@ -19,6 +19,8 @@ except ImportError:
 
 import numpy as np
 
+from fuzzylogic import defuzz
+
 from .combinators import MAX, MIN, bounded_sum, product, simple_disjoint_sum
 from .functions import Membership, inv, normalize
 
@@ -481,50 +483,60 @@ class Rule:
     def __getitem__(self, key: Iterable[Set]) -> Set:
         return self.conditions[frozenset(key)]
 
-    def __call__(self, values: dict[Domain, float | int], method: str = "cog") -> float | None:
-        """Calculate the infered value based on different methods.
-        Default is center of gravity (cog).
+    def __call__(self, values: dict[Domain, float], method=defuzz.cog) -> float | None:
         """
-        assert isinstance(values, dict), "Please make sure to pass a dict[Domain, float|int] as values."
-        assert len(self.conditions) > 0, "No point in having a rule with no conditions, is there?"
+        Calculate the inferred crisp value based on the fuzzy rules.
+        The 'method' parameter should be one of the static methods from the DefuzzMethod class.
+        """
+        assert isinstance(values, dict), "Please pass a dict[Domain, float|int] as values."
+        assert values, "No condition rules defined!"
+
+        # Extract common target domain and build list of (then_set, firing_strength)
+        sample_then_set = next(iter(self.conditions.values()))
+        target_domain = getattr(sample_then_set, "domain", None)
+        assert target_domain, "Target domain must be defined."
+
+        target_weights: list[tuple[Set, float]] = []
+        for if_sets, then_set in self.conditions.items():
+            assert then_set.domain == target_domain, "All target sets must be in the same Domain."
+            degrees = []
+            for s in if_sets:
+                assert s.domain is not None, "Domain must be defined for all fuzzy sets."
+                degrees.append(s(values[s.domain]))
+            firing_strength = min(degrees, default=0)
+            if firing_strength > 0:
+                target_weights.append((then_set, firing_strength))
+        if not target_weights:
+            return None
+
+        # For center-of-gravity / centroid:
+        if method == defuzz.cog:
+            return defuzz.cog(target_weights)
+
+        # For methods that rely on an aggregated membership function:
+        points = list(target_domain.range)
+        n = len(points)
+        step = (
+            (target_domain._high - target_domain._low) / (n - 1)
+            if n > 1
+            else (target_domain._high - target_domain._low)
+        )
+
+        def aggregated_membership(x: float) -> float:
+            # For each rule, limit its inferred output by its firing strength and then take the max
+            return max(min(weight, then_set(x)) for then_set, weight in target_weights)
+
         match method:
-            case "cog":
-                # iterate over the conditions and calculate the actual values and weights contributing to cog
-                target_weights: list[tuple[Set, float]] = []
-                target_domain = list(self.conditions.values())[0].domain
-                assert target_domain is not None, "Target domain must be defined."
-                for if_sets, then_set in self.conditions.items():
-                    actual_values: list[float] = []
-                    assert then_set.domain == target_domain, "All target sets must be in the same Domain."
-                    for s in if_sets:
-                        assert s.domain is not None, "Domains must be defined."
-                        actual_values.append(s(values[s.domain]))
-                    x = min(actual_values, default=0)
-                    if x > 0:
-                        target_weights.append((then_set, x))
-                if not target_weights:
-                    return None
-                sum_weights = 0
-                sum_weighted_cogs: float = 0
-                for then_set, weight in target_weights:
-                    sum_weighted_cogs += then_set.center_of_gravity() * weight
-                    sum_weights += weight
-                index = sum_weighted_cogs / sum_weights
-                return (target_domain._high - target_domain._low) / len(  # type: ignore
-                    target_domain.range
-                ) * index + target_domain._low  # type: ignore
-            case "centroid":  # centroid == center of mass == center of gravity for simple solids
-                raise NotImplementedError("actually the same as 'cog' if densities are uniform.")
-            case "bisector":
-                raise NotImplementedError("Bisector method not implemented yet.")
-            case "mom":
-                raise NotImplementedError("Middle of max method not implemented yet.")
-            case "som":
-                raise NotImplementedError("Smallest of max method not implemented yet.")
-            case "lom":
-                raise NotImplementedError("Largest of max method not implemented yet.")
+            case defuzz.bisector:
+                return defuzz.bisector(aggregated_membership, points, step)
+            case defuzz.mom:
+                return defuzz.mom(aggregated_membership, points)
+            case defuzz.som:
+                return defuzz.som(aggregated_membership, points)
+            case defuzz.lom:
+                return defuzz.lom(aggregated_membership, points)
             case _:
-                raise ValueError("Invalid method.")
+                raise ValueError("Invalid defuzzification method specified.")
 
 
 def rule_from_table(table: str, references: dict[str, float]) -> Rule:
