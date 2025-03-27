@@ -1,5 +1,5 @@
 """
-Domain, Set and Rule classes for fuzzy logic.
+classes.py - Domain, Set and Rule classes for fuzzy logic.
 
 Primary abstractions for recursive functions and arrays,
 adding logical operaitons for easier handling.

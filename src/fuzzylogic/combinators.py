@@ -1,5 +1,5 @@
 """
-Combine two linguistic terms.
+combinators.py - Combine two linguistic terms.
 
 a and b are functions of two sets of the same domain.
 

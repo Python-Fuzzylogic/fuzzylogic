@@ -1,5 +1,5 @@
 """
-General-purpose functions that map R -> [0,1].
+functions.py - General-purpose functions that map R -> [0,1].
 
 These functions work as closures.
 The inner function uses the variables of the outer function.
