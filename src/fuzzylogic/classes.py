@@ -428,11 +428,6 @@ class Set:
         """
         Return a string representation of the Set that reconstructs the set with eval().
         """
-
-        # experimental
-        # x = f"{self.func.__qualname__.split('.')[0]}({self.func.__closure__[0].cell_contents.__code__.co_nlocals}))"  # noqa: E501
-        # print(x)
-
         if self.domain is not None:
             return f"{self.domain._name}.{self.name}"  # type: ignore
         return f"Set(({self.func.__qualname__})"
@@ -461,19 +456,28 @@ class Rule:
 
     type T = Rule
 
-    def __init__(self, conditions_in: dict[Iterable[Set] | Set, Set]):
+    def __init__(
+        self,
+        *args: Rule | dict[Iterable[Set] | Set, Set],
+    ) -> None:
+        """Define a rule with conditions and a target set."""
         self.conditions: dict[frozenset[Set], Set] = {}
-        for if_sets, then_set in conditions_in.items():
-            if isinstance(if_sets, Set):
-                if_sets = (if_sets,)
-            self.conditions[frozenset(if_sets)] = then_set
+        for arg in args:
+            if isinstance(arg, Rule):
+                self.conditions |= arg.conditions
+            elif isinstance(arg, dict):
+                for if_sets, then_set in arg.items():
+                    if isinstance(if_sets, Set):
+                        if_sets = (if_sets,)
+                    self.conditions[frozenset(if_sets)] = then_set  # type: ignore
+            else:
+                raise TypeError(f"Expected any number of Rule or dict[Set, Set], got {type(arg).__name__}.")
 
     def __add__(self, other: Rule) -> Rule:
         return Rule({**self.conditions, **other.conditions})
 
     def __radd__(self, other: Rule | int) -> Rule:
-        # we're using sum(..)
-        if isinstance(other, int):
+        if isinstance(other, int):  # as sum(...) does implicitely 0 + ...
             return self
         return Rule({**self.conditions, **other.conditions})
 
