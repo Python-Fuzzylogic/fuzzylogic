@@ -47,4 +47,35 @@ assert table_rules == rules
 value = {temp: 20, tan: 0.55}
 result = rules(value)
 assert isinstance(result, float)
-assert np.isclose(result, -0.5, atol=0.0001)
+assert np.isclose(result, 0.45, atol=0.0001)
+
+"""
+For the input {temp: 20, tan: 0.55}:
+* temp: 20 activates:
+    temp.mittel (membership = 0.75)
+    temp.kalt (membership = 0.25)
+
+* tan: 0.55 activates:
+    tan.mittel (membership = 0.875)
+    tan.groß (membership = 0.125)
+
+This triggers four rules:
+
+* R4: (temp.kalt, tan.mittel) → gef.klein (firing strength = min(0.25, 0.875) = 0.25)
+* R5: (temp.mittel, tan.mittel) → gef.mittel (firing strength = 0.75)
+* R7: (temp.kalt, tan.groß) → gef.mittel (firing strength = min(0.25, 0.125) = 0.125)
+* R8: (temp.mittel, tan.groß) → gef.groß (firing strength = 0.125)
+
+
+|------------------|------------------|------------------|
+| Rule              | Consequent       | Weight           | Consequent CoG   |
+|------------------|------------------|------------------|
+|R4|gef.klein|	0.25|	0.0 (midpoint of [-0.5, 0.5])
+|R5|gef.mittel|	0.75|	0.5 (midpoint of [0, 1])
+|R7|gef.mittel|	0.125|	0.5
+|R8|gef.groß|	0.125|	1.0 (midpoint of [0.5, 1.5])
+
+COG = (0.25 * 0.0 + 0.75 * 0.5 + 0.125 * 0.5 + 0.125 * 1.0) / (0.25 + 0.75 + 0.125 + 0.125)
+    = 0.5625/1.25
+    = 0.45
+"""
