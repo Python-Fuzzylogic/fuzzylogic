@@ -20,7 +20,10 @@ def cog(target_weights: list[tuple[Set, float]]) -> float:
         • xᵢ is the corresponding value for the iᵗʰ element in the output domain.
 
     """
+
     sum_weights = sum(weight for _, weight in target_weights)
+    if sum_weights == 0:
+        raise ValueError("Total weight is zero. Cannot compute center-of-gravity.")
     sum_weighted_cogs = sum(then_set.center_of_gravity() * weight for then_set, weight in target_weights)
     return sum_weighted_cogs / sum_weights
 
