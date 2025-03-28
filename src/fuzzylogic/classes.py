@@ -7,6 +7,7 @@ adding logical operaitons for easier handling.
 
 from __future__ import annotations
 
+from random import randint
 from typing import Any, Iterable, overload
 
 from numpy.typing import NDArray
@@ -392,6 +393,27 @@ class Set:
             raise ImportError(
                 "matplotlib not available. Please re-install with 'pip install fuzzylogic[plotting]'"
             )
+        R = self.domain.range  # e.g., generated via np.linspace(...)
+
+        cog_val = self.center_of_gravity()
+
+        diffs = np.diff(R)
+        tol_value = diffs.min() / 100 if len(diffs) > 0 else 1e-6
+
+        if all(abs(x - cog_val) >= tol_value for x in R):
+            R = sorted(set(R).union({cog_val}))
+
+        V = [self.func(x) for x in R]
+        plot_color = "#{:06x}".format(randint(0, 0xFFFFFF))
+        plt.plot(R, V, label=str(self), color=plot_color, lw=2)
+        plt.axvline(cog_val, color=plot_color, linestyle="--", linewidth=1.5, label=f"CoG = {cog_val:.2f}")
+        plt.plot(cog_val, self.func(cog_val), "o", color=plot_color, markersize=8)
+
+        plt.title("Fuzzy Set Membership Function")
+        plt.xlabel("Domain Value")
+        plt.ylabel("Membership Degree")
+        plt.legend()
+        plt.grid(True)
 
     def array(self) -> Array:
         """Return an array of all values for this set within the given domain."""
