@@ -152,6 +152,7 @@ class Domain:
             self._sets[name] = value
             value.domain = self
             value.name = name
+            value.array()  # force the array to be calculated for caching
 
     def __delattr__(self, name: str) -> None:
         """Delete a fuzzy set from the domain."""
@@ -223,7 +224,9 @@ class Set:
         self.func: Membership = func
         self.domain: Domain | None = domain
         self.name: str | None = name
-        self.__center_of_gravity: float | None = None
+
+        self._center_of_gravity: float | None = None
+        self._cached_array: np.ndarray | None = None
 
     @overload
     def __call__(self, x: float, /) -> float: ...
@@ -385,11 +388,7 @@ class Set:
     def plot(self) -> None:
         """Graph the set in the given domain."""
         assert self.domain is not None, NO_DOMAIN
-        R = self.domain.range
-        V = [self.func(x) for x in R]
-        if plt:
-            plt.plot(R, V)  # type: ignore
-        else:
+        if not plt:
             raise ImportError(
                 "matplotlib not available. Please re-install with 'pip install fuzzylogic[plotting]'"
             )
@@ -418,7 +417,9 @@ class Set:
     def array(self) -> Array:
         """Return an array of all values for this set within the given domain."""
         assert self.domain is not None, NO_DOMAIN
-        return np.fromiter((self.func(x) for x in self.domain.range), float)
+        if self._cached_array is None:
+            self._cached_array = np.fromiter((self.func(x) for x in self.domain.range), float)
+        return self._cached_array
 
     def range(self) -> Array:
         """Return the range of the domain."""
@@ -427,14 +428,14 @@ class Set:
 
     def center_of_gravity(self) -> float:
         """Return the center of gravity for this distribution, within the given domain."""
-        if self.__center_of_gravity is not None:
-            return self.__center_of_gravity
+        if self._center_of_gravity is not None:
+            return self._center_of_gravity
         assert self.domain is not None, NO_DOMAIN
         weights = self.array()
         if sum(weights) == 0:
             return 0
         cog = float(np.average(self.domain.range, weights=weights))
-        self.__center_of_gravity = cog
+        self._center_of_gravity = cog
         return cog
 
     def __repr__(self) -> str:
