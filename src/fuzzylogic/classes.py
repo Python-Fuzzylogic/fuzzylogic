@@ -39,8 +39,8 @@ class FuzzyWarning(UserWarning):
     pass
 
 
-NO_DOMAIN_TO_COMPARE = "No domains to compare to."
-CANT_COMPARE_DOMAINS = "Can't compare different domains."
+NO_DOMAIN_TO_COMPARE = "Domain can't work with no domain."
+CANT_COMPARE_DOMAINS = "Can't work with different domains."
 NO_DOMAIN = "No domain defined."
 
 
@@ -253,14 +253,17 @@ class Set:
 
     def __invert__(self) -> Set:
         """Return a new set with 1 - function."""
+        assert self.domain is not None, NO_DOMAIN
         return Set(inv(self.func), domain=self.domain)
 
     def __neg__(self) -> Set:
         """Synonyme for invert."""
+        assert self.domain is not None, NO_DOMAIN
         return Set(inv(self.func), domain=self.domain)
 
     def __and__(self, other: Set) -> Set:
         """Return a new set with modified function."""
+        assert self.domain is not None and other.domain is not None, NO_DOMAIN_TO_COMPARE
         assert self.domain == other.domain
         return Set(MIN(self.func, other.func), domain=self.domain)
 
@@ -380,8 +383,7 @@ class Set:
 
     def plot(self) -> None:
         """Graph the set in the given domain."""
-        if self.domain is None:
-            raise FuzzyWarning("No domain assigned, cannot plot.")
+        assert self.domain is not None, NO_DOMAIN
         R = self.domain.range
         V = [self.func(x) for x in R]
         if plt:
@@ -393,21 +395,19 @@ class Set:
 
     def array(self) -> Array:
         """Return an array of all values for this set within the given domain."""
-        if self.domain is None:
-            raise FuzzyWarning("No domain assigned.")
+        assert self.domain is not None, NO_DOMAIN
         return np.fromiter((self.func(x) for x in self.domain.range), float)
 
     def range(self) -> Array:
         """Return the range of the domain."""
-        if self.domain is None:
-            raise FuzzyWarning("No domain assigned.")
+        assert self.domain is not None, NO_DOMAIN
         return self.domain.range
 
     def center_of_gravity(self) -> float:
         """Return the center of gravity for this distribution, within the given domain."""
         if self.__center_of_gravity is not None:
             return self.__center_of_gravity
-        assert self.domain is not None, "No center of gravity with no domain."
+        assert self.domain is not None, NO_DOMAIN
         weights = self.array()
         if sum(weights) == 0:
             return 0
@@ -431,8 +431,7 @@ class Set:
 
     def normalized(self) -> Set:
         """Return a set that is normalized *for this domain* with 1 as max."""
-        if self.domain is None:
-            raise FuzzyWarning("Can't normalize without domain.")
+        assert self.domain is not None, NO_DOMAIN
         return Set(normalize(max(self.array()), self.func), domain=self.domain)
 
     def __hash__(self) -> int:
