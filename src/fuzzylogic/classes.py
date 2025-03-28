@@ -438,6 +438,47 @@ class Set:
         return id(self)
 
 
+class SingletonSet(Set):
+    def __init__(self, c: float, no_m: float = 0, c_m: float = 1, domain: Domain | None = None):
+        super().__init__(self._singleton_fn(c, no_m, c_m), domain=domain)
+        self.c = c
+        self.no_m = no_m
+        self.c_m = c_m
+        self.domain = domain
+
+        self._cached_array: np.ndarray | None = None
+
+    @staticmethod
+    def _singleton_fn(c: float, no_m: float = 0, c_m: float = 1) -> Membership:
+        return lambda x: c_m if x == c else no_m
+
+    def center_of_gravity(self) -> float:
+        """Directly return singleton position"""
+        return self.c
+
+    def plot(self) -> None:
+        """Graph the singleton set in the given domain,
+        ensuring that the singleton's coordinate is included.
+        """
+        assert self.domain is not None, "NO_DOMAIN"
+        if not plt:
+            raise ImportError(
+                "matplotlib not available. Please re-install with 'pip install fuzzylogic[plotting]'"
+            )
+
+        R = self.domain.range
+        if self.c not in R:
+            R = sorted(set(R).union({self.c}))
+        V = [self.func(x) for x in R]
+        plt.plot(R, V, label=f"Singleton {self.c}")
+        plt.title("Singleton Membership Function")
+        plt.xlabel("Domain Value")
+        plt.ylabel("Membership")
+        plt.legend()
+        plt.grid(True)
+        plt.show()
+
+
 class Rule:
     """
     Collection of bound sets spanning a multi-dimensional space of their domains, mapping to a target domain.

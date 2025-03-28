@@ -26,11 +26,17 @@ The intervals with m == 0 are called 'unsupported', short no_m
 In a fuzzy set with one and only one m == 1, this element is called 'prototype'.
 """
 
+from __future__ import annotations
+
 from collections.abc import Callable
 from math import exp, isinf, isnan, log
-from typing import Any
+from typing import TYPE_CHECKING, Any
+
+if TYPE_CHECKING:
+    from .classes import SingletonSet
 
 type Membership = Callable[[float], float]
+
 
 try:
     # from numba import njit # still not ready for prime time :(
@@ -146,21 +152,20 @@ def moderate(func: Callable[[float], float]) -> Callable[[float], float]:
 ########################
 
 
-def singleton(p: float, *, no_m: float = 0, c_m: float = 1) -> Membership:
-    """A single spike.
+def singleton(c: float, no_m: float = 0, c_m: float = 1) -> SingletonSet:
+    """A singleton function.
 
-    >>> f = singleton(2)
-    >>> f(1)
-    0
-    >>> f(2)
-    1
+    This is unusually tricky because the CoG sums up all values and divides by the number of values, which
+    may result in 0 due to rounding errors.
+    Additionally and more significantly, a singleton well within domain range but not within
+    its resolution will never be found and considered. Thus, singletons need special treatment.
+
+    We solve this issue by returning a special subclass (which must be imported here due to circular import),
+    which overrides the normal CoG implementation, but still works with the rest of the code.
     """
-    assert 0 <= no_m < c_m <= 1
+    from .classes import SingletonSet
 
-    def f(x: float) -> float:
-        return c_m if x == p else no_m
-
-    return f
+    return SingletonSet(c, no_m=no_m, c_m=c_m)
 
 
 def linear(m: float = 0, b: float = 0) -> Membership:
