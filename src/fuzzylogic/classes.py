@@ -39,6 +39,11 @@ class FuzzyWarning(UserWarning):
     pass
 
 
+NO_DOMAIN_TO_COMPARE = FuzzyWarning("No domains to compare.")
+CANT_COMPARE_DOMAINS = "Can't compare different domains."
+NO_DOMAIN = FuzzyWarning("No domain.")
+
+
 class Domain:
     """
     A domain is a 'measurable' dimension of 'real' values like temperature.
@@ -83,8 +88,8 @@ class Domain:
         """Define a domain."""
         assert low < high, "higher bound must be greater than lower."
         assert res > 0, "resolution can't be negative or zero"
-        assert isinstance(name, str), "Name must be a string."
-        assert str.isidentifier(name), "Name must be a valid identifier."
+        assert isinstance(name, str), "Domain Name must be a string."
+        assert str.isidentifier(name), "Domain Name must be a valid identifier."
         self._name = name
         self._high = high
         self._low = low
@@ -303,50 +308,50 @@ class Set:
 
     def __le__(self, other: Set) -> bool:
         """If this <= other, it means this is a subset of the other."""
-        assert self.domain == other.domain
+        assert self.domain == other.domain, CANT_COMPARE_DOMAINS
         if self.domain is None or other.domain is None:
-            raise FuzzyWarning("Can't compare without Domains.")
+            raise NO_DOMAIN_TO_COMPARE
         return all(np.less_equal(self.array(), other.array()))
 
     def __lt__(self, other: Set) -> bool:
         """If this < other, it means this is a proper subset of the other."""
-        assert self.domain == other.domain
+        assert self.domain == other.domain, CANT_COMPARE_DOMAINS
         if self.domain is None or other.domain is None:
-            raise FuzzyWarning("Can't compare without Domains.")
+            raise NO_DOMAIN_TO_COMPARE
         return all(np.less(self.array(), other.array()))
 
     def __ge__(self, other: Set) -> bool:
         """If this >= other, it means this is a superset of the other."""
-        assert self.domain == other.domain
+        assert self.domain == other.domain, CANT_COMPARE_DOMAINS
         if self.domain is None or other.domain is None:
-            raise FuzzyWarning("Can't compare without Domains.")
+            raise NO_DOMAIN_TO_COMPARE
         return all(np.greater_equal(self.array(), other.array()))
 
     def __gt__(self, other: Set) -> bool:
         """If this > other, it means this is a proper superset of the other."""
-        assert self.domain == other.domain
+        assert self.domain == other.domain, CANT_COMPARE_DOMAINS
         if self.domain is None or other.domain is None:
-            raise FuzzyWarning("Can't compare without Domains.")
+            raise NO_DOMAIN_TO_COMPARE
         return all(np.greater(self.array(), other.array()))
 
     def __len__(self) -> int:
         """Number of membership values in the set, defined by bounds and resolution of domain."""
         if self.domain is None:
-            raise FuzzyWarning("No domain.")
+            raise NO_DOMAIN
         return len(self.array())
 
     @property
     def cardinality(self) -> float:
         """The sum of all values in the set."""
         if self.domain is None:
-            raise FuzzyWarning("No domain.")
+            raise NO_DOMAIN
         return sum(self.array())
 
     @property
     def relative_cardinality(self) -> float:
         """Relative cardinality is the sum of all membership values by float of all values."""
         if self.domain is None:
-            raise FuzzyWarning("No domain.")
+            raise NO_DOMAIN
         if len(self) == 0:
             # this is highly unlikely and only possible with res=inf but still..
             raise FuzzyWarning("The domain has no element.")
