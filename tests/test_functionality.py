@@ -9,7 +9,7 @@ from pytest import fixture
 
 from fuzzylogic.classes import Domain, Set
 from fuzzylogic.functions import R, S, bounded_linear
-from fuzzylogic.rules import weighted_sum
+from fuzzylogic.tools import weighted_sum
 
 
 @fixture

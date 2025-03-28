@@ -9,7 +9,7 @@ from hypothesis import strategies as st
 from fuzzylogic import combinators as combi
 from fuzzylogic import functions as fun
 from fuzzylogic import hedges, truth
-from fuzzylogic import rules as ru
+from fuzzylogic import tools as ru
 from fuzzylogic.classes import Domain, Set
 
 version = (0, 1, 1, 4)
