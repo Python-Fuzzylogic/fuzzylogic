@@ -39,9 +39,9 @@ class FuzzyWarning(UserWarning):
     pass
 
 
-NO_DOMAIN_TO_COMPARE = FuzzyWarning("No domains to compare.")
+NO_DOMAIN_TO_COMPARE = "No domains to compare to."
 CANT_COMPARE_DOMAINS = "Can't compare different domains."
-NO_DOMAIN = FuzzyWarning("No domain.")
+NO_DOMAIN = "No domain defined."
 
 
 class Domain:
@@ -296,65 +296,56 @@ class Set:
     def __eq__(self, other: object) -> bool:
         """A set is equal with another if both return the same values over the same range."""
         if self.domain is None or not isinstance(other, Set) or other.domain is None:
-            # It would require complete AST analysis to check whether both Sets
+            # It would require complete bytecode analysis to check whether both Sets
             # represent the same recursive functions -
             # additionally, there are infinitely many mathematically equivalent
             # functions that don't have the same bytecode...
             raise FuzzyWarning("Impossible to determine.")
-        else:
-            # however, if domains ARE assigned (whether or not it's the same domain),
-            # we simply can check if they map to the same values
-            return np.array_equal(self.array(), other.array())
+
+        # however, if domains ARE assigned (whether or not it's the same domain),
+        # we simply can check if they map to the same values
+        return np.array_equal(self.array(), other.array())
 
     def __le__(self, other: Set) -> bool:
         """If this <= other, it means this is a subset of the other."""
+        assert self.domain is not None and other.domain is not None, NO_DOMAIN_TO_COMPARE
         assert self.domain == other.domain, CANT_COMPARE_DOMAINS
-        if self.domain is None or other.domain is None:
-            raise NO_DOMAIN_TO_COMPARE
         return all(np.less_equal(self.array(), other.array()))
 
     def __lt__(self, other: Set) -> bool:
         """If this < other, it means this is a proper subset of the other."""
+        assert self.domain is not None and other.domain is not None, NO_DOMAIN_TO_COMPARE
         assert self.domain == other.domain, CANT_COMPARE_DOMAINS
-        if self.domain is None or other.domain is None:
-            raise NO_DOMAIN_TO_COMPARE
         return all(np.less(self.array(), other.array()))
 
     def __ge__(self, other: Set) -> bool:
         """If this >= other, it means this is a superset of the other."""
+        assert self.domain is not None and other.domain is not None, NO_DOMAIN_TO_COMPARE
         assert self.domain == other.domain, CANT_COMPARE_DOMAINS
-        if self.domain is None or other.domain is None:
-            raise NO_DOMAIN_TO_COMPARE
         return all(np.greater_equal(self.array(), other.array()))
 
     def __gt__(self, other: Set) -> bool:
         """If this > other, it means this is a proper superset of the other."""
+        assert self.domain is not None and other.domain is not None, NO_DOMAIN_TO_COMPARE
         assert self.domain == other.domain, CANT_COMPARE_DOMAINS
-        if self.domain is None or other.domain is None:
-            raise NO_DOMAIN_TO_COMPARE
         return all(np.greater(self.array(), other.array()))
 
     def __len__(self) -> int:
         """Number of membership values in the set, defined by bounds and resolution of domain."""
-        if self.domain is None:
-            raise NO_DOMAIN
+        assert self.domain is not None, NO_DOMAIN
         return len(self.array())
 
     @property
     def cardinality(self) -> float:
         """The sum of all values in the set."""
-        if self.domain is None:
-            raise NO_DOMAIN
+        assert self.domain is not None, NO_DOMAIN
         return sum(self.array())
 
     @property
     def relative_cardinality(self) -> float:
         """Relative cardinality is the sum of all membership values by float of all values."""
-        if self.domain is None:
-            raise NO_DOMAIN
-        if len(self) == 0:
-            # this is highly unlikely and only possible with res=inf but still..
-            raise FuzzyWarning("The domain has no element.")
+        assert self.domain is not None, NO_DOMAIN
+        assert len(self) > 0, "The domain has no element."  # only possible with step=inf, but still..
         return self.cardinality / len(self)
 
     def concentrated(self) -> Set:
