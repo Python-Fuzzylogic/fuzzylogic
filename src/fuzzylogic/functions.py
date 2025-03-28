@@ -39,7 +39,8 @@ type Membership = Callable[[float], float]
 
 
 try:
-    # from numba import njit # still not ready for prime time :(
+    from numba import njit as njit  # ready for prime time?
+
     raise ImportError
 
 except ImportError:
@@ -47,6 +48,8 @@ except ImportError:
     def njit(func: Membership) -> Membership:
         return func
 
+
+LOW_HIGH = "low must be less than high"
 
 #####################
 # SPECIAL FUNCTIONS #
@@ -111,7 +114,6 @@ def alpha(
 
     floor_clip = floor if floor_clip is None else floor_clip
     ceiling_clip = ceiling if ceiling_clip is None else ceiling_clip
-    # assert 0 <= floor_clip <= ceiling_clip <= 1, "%s <= %s"%(floor_clip, ceiling_clip)
 
     def f(x: float) -> float:
         m = func(x)
@@ -254,7 +256,7 @@ def bounded_linear(
     >>> f(4)
     1.0
     """
-    assert low < high, "low must be less than high"
+    assert low < high, LOW_HIGH
     assert c_m > no_m, "core_m must be greater than unsupported_m"
 
     if inverse:
@@ -414,7 +416,7 @@ def sigmoid(L: float, k: float, x0: float = 0) -> Membership:
 
     def f(x: float) -> float:
         if isnan(k * x):
-            # e^(0*inf) = 1
+            # e^(0*inf) == 1
             o = 1.0
         else:
             try:
@@ -464,7 +466,7 @@ def bounded_sigmoid(low: float, high: float, inverse: bool = False) -> Membershi
     >>> round(f(-100000), 2)
     0.0
     """
-    assert low < high, "low must be less than high"
+    assert low < high, LOW_HIGH
 
     if inverse:
         low, high = high, low
@@ -489,7 +491,7 @@ def bounded_sigmoid(low: float, high: float, inverse: bool = False) -> Membershi
         except OverflowError:
             q = float("inf")
 
-        # e^(inf)*e^(-inf) = 1
+        # e^(inf)*e^(-inf) == 1
         r = p * q
         if isnan(r):
             r = 1
@@ -560,7 +562,7 @@ def triangular_sigmoid(low: float, high: float, c: float | None = None) -> Membe
     >>> round(g(3), 2)
     0.9
     """
-    assert low < high, "low must be less than high"
+    assert low < high, LOW_HIGH
     c = c if c is not None else (low + high) / 2.0
     assert low < c < high, "c must be inbetween"
 

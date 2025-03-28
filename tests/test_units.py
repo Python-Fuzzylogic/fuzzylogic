@@ -18,7 +18,7 @@ version = (0, 1, 1, 4)
 common_settings = settings(deadline=None, suppress_health_check=cast(list[HealthCheck], list(HealthCheck)))
 
 
-class Test_Functions(TestCase):
+class TestFunctions(TestCase):
     @common_settings
     @given(st.floats(allow_nan=False))
     def test_noop(self, x: float) -> None:
@@ -250,7 +250,7 @@ class Test_Functions(TestCase):
         assert 0 <= f(x) <= limit
 
 
-class Test_Hedges(TestCase):
+class TestHedges(TestCase):
     @common_settings
     @given(st.floats(min_value=0, max_value=1))
     def test_very(self, x: float) -> None:
@@ -273,7 +273,7 @@ class Test_Hedges(TestCase):
         assert 0 <= f(x) <= 1
 
 
-class Test_Combinators(TestCase):
+class TestCombinators(TestCase):
     @common_settings
     @given(st.floats(min_value=0, max_value=1))
     def test_MIN(self, x: float) -> None:
@@ -381,7 +381,7 @@ class Test_Combinators(TestCase):
         assert 0 <= f(x) <= 1
 
 
-class Test_Domain(TestCase):
+class TestDomain(TestCase):
     def test_basics(self) -> None:
         D = Domain("d", 0, 10)
         assert D._name == "d"  # type: ignore
@@ -399,7 +399,7 @@ class Test_Domain(TestCase):
         # assert d == D
 
 
-class Test_Set(TestCase):
+class TestSet(TestCase):
     @common_settings
     @given(
         st.floats(allow_nan=False, allow_infinity=False),
@@ -441,7 +441,7 @@ class Test_Set(TestCase):
         assert all(np.isclose(D.s1.array(), D.s2.array()))
 
 
-class Test_Rules(TestCase):
+class TestRules(TestCase):
     @common_settings
     @given(
         st.floats(min_value=0, max_value=1),
@@ -462,7 +462,7 @@ class Test_Rules(TestCase):
         assert isclose(x, ru.round_partial(x, res))
 
 
-class Test_Truth(TestCase):
+class TestTruth(TestCase):
     @common_settings
     @given(st.floats(min_value=0, max_value=1))
     def test_true_and_false(self, m: float) -> None:
