@@ -495,7 +495,9 @@ class Rule:
     def __call__(self, values: dict[Domain, float], method=defuzz.cog) -> float | None:
         """
         Calculate the inferred crisp value based on the fuzzy rules.
-        The 'method' parameter should be one of the static methods from the DefuzzMethod class.
+        values: dict[Domain, float] - the input values for the fuzzy sets
+        method: defuzzification method to use (default: center of gravity) from fuzzylogic.defuzz
+        Returns the defuzzified value.
         """
         assert isinstance(values, dict), "Please pass a dict[Domain, float|int] as values."
         assert values, "No condition rules defined!"
