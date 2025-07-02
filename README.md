@@ -24,6 +24,47 @@ To make it possible to write fuzzy logic in the most pythonic and simplest way i
 * Domain and Set uses an assignment trick to make it possible to instantiate Set() without passing domain and name over and over (yet still be explicit, just not the way one would normally expect). This also allows to call sets as Domain.attributes, which also normally shouldn't be possible (since they are technically not attributes). However, this allows interesting things like dangling sets (sets without domains) that can be freely combined with other sets to avoid cluttering of domain-namespaces and just have the resulting set assigned to a domain to work with.
 
 # Installation
+```
+pip install fuzzylogic
+```
+
+Note: If you want to use the experimental GUI, you'll also need matplotlib:
+```
+pip install matplotlib
+```
+
+# GUI for Experimentation
+
+The library now includes a web-based GUI for experimenting with fuzzy logic and generating code! This makes it easy to:
+
+- Visually create and test fuzzy logic systems
+- Experiment with different membership functions
+- Generate Python code for your fuzzy logic setup
+- Plot and visualize fuzzy sets
+
+## Starting the GUI
+
+```python
+import fuzzylogic
+
+# Start the GUI (opens browser automatically)
+fuzzylogic.run_gui()
+
+# Or from command line
+# python -m fuzzylogic.gui.cli
+```
+
+![Fuzzy Logic GUI Screenshot](https://github.com/user-attachments/assets/3c3c4de2-0caf-4e29-9623-576be5c9a93b)
+
+## GUI Features
+
+- **Create Domains**: Define fuzzy logic domains with custom ranges
+- **Add Fuzzy Sets**: Create sets using R (rising), S (falling), triangular, trapezoid, and rectangular functions
+- **Visualization**: Real-time plotting of fuzzy sets
+- **Test Values**: Interactive testing of input values
+- **Code Generation**: Automatic Python code generation
+
+# Documentation
 Just enter 
 `python -m pip install fuzzylogic`
 in a commandline prompt and you should be good to go!
