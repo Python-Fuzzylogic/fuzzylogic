@@ -34,6 +34,13 @@ def test_array(simple: Domain) -> None:
     assert array_equal(simple.high.array(), [0, 0, 0, 0, 0, 0, 0, 0, 0, 0.5, 1.0])
     assert len(simple.low.array()) == 11  # unlike arrays and lists, upper boundary is INCLUDED
 
+def test_membership_function_boundaries(simple: Domain) -> None:
+    """Test membership values at the boundaries of S and R functions."""
+    assert simple.low(0) == 1.0
+    assert simple.low(1) == 0.0
+
+    assert simple.high(8) == 0.0
+    assert simple.high(10) == 1.0
 
 def test_value(temp: Domain) -> None:
     assert temp(6) == {temp.cold: 0.6, temp.hot: 0, temp.warm: 0.4}
