@@ -18,6 +18,11 @@ jobs:
         echo "Generating docs/docs/index.md..."
         cat README.md > docs/docs/index.md
 
+    - name: Configure Git identity
+      run: |
+        git config user.name "github-actions[bot]"
+        git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
     - name: Commit changes
       run: |
         git add docs/docs/index.md
