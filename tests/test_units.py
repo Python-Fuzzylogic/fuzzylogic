@@ -313,6 +313,9 @@ class TestCombinators(TestCase):
         b = fun.noop()
         f = combi.lukasiewicz_AND(a, b)
         assert 0 <= f(x) <= 1
+        # Axiomatic boundary condition: T(x, 1) = x and T(x, 0) = 0
+        assert abs(combi.lukasiewicz_AND(a, fun.constant(1.0))(x) - x) < 1e-9
+        assert abs(combi.lukasiewicz_AND(a, fun.constant(0.0))(x) - 0.0) < 1e-9
 
     @common_settings
     @given(st.floats(min_value=0, max_value=1))
@@ -321,6 +324,22 @@ class TestCombinators(TestCase):
         b = fun.noop()
         f = combi.lukasiewicz_OR(a, b)
         assert 0 <= f(x) <= 1
+        # Axiomatic boundary condition: S(x, 0) = x and S(x, 1) = 1
+        assert abs(combi.lukasiewicz_OR(a, fun.constant(0.0))(x) - x) < 1e-9
+        assert abs(combi.lukasiewicz_OR(a, fun.constant(1.0))(x) - 1.0) < 1e-9
+
+    @common_settings
+    @given(st.floats(min_value=0, max_value=1))
+    def test_yager_operators(self, x: float) -> None:
+        a = fun.noop()
+        b = fun.noop()
+        f_and = combi.yager_AND(1.0)(a, b)
+        f_or = combi.yager_OR(1.0)(a, b)
+        assert 0 <= f_and(x) <= 1
+        assert 0 <= f_or(x) <= 1
+        # Yager w=1 equals Lukasiewicz
+        assert abs(f_and(x) - combi.lukasiewicz_AND(a, b)(x)) < 1e-9
+        assert abs(f_or(x) - combi.lukasiewicz_OR(a, b)(x)) < 1e-9
 
     @common_settings
     @given(st.floats(min_value=0, max_value=1))
