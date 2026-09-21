@@ -95,12 +95,16 @@ def bounded_sum(*guncs: Membership) -> Membership:
     return F
 
 
+# Alias providing standard soft computing terminology
+algebraic_sum = bounded_sum
+
+
 def lukasiewicz_AND(*guncs: Membership) -> Membership:
-    """AND variant."""
+    """Lukasiewicz T-norm (bounded difference) AND variant: max(0, x + y - 1)."""
     funcs = list(guncs)
 
     def op(x: float, y: float) -> float:
-        return min(1, x + y)
+        return max(0.0, x + y - 1.0)
 
     def F(z: float) -> float:
         return reduce(op, (f(z) for f in funcs))
@@ -109,17 +113,70 @@ def lukasiewicz_AND(*guncs: Membership) -> Membership:
 
 
 def lukasiewicz_OR(*guncs: Membership) -> Membership:
-    """OR variant."""
-
+    """Lukasiewicz S-norm (bounded sum) OR variant: min(1, x + y)."""
     funcs = list(guncs)
 
     def op(x: float, y: float) -> float:
-        return max(0, x + y - 1)
+        return min(1.0, x + y)
 
     def F(z: float) -> float:
         return reduce(op, (f(z) for f in funcs))
 
     return F
+
+
+def yager_AND(w: float) -> Callable[..., Membership]:
+    """Parametric Yager T-norm (AND variant) parameterized by w > 0.
+
+    Formula:
+        T_w(x, y) = 1 - min(1, ((1 - x)^w + (1 - y)^w)^(1/w))
+
+    As w -> inf, T_w -> min(x, y) (standard Zadeh AND).
+    When w = 1, T_1 -> max(0, x + y - 1) (Lukasiewicz AND).
+    As w -> 0, T_w approaches drastic intersection.
+    """
+    if w <= 0:
+        raise ValueError(f"Parameter 'w' must be strictly positive (w > 0), got {w}")
+
+    def E(*guncs: Membership) -> Membership:
+        funcs = list(guncs)
+
+        def op(x: float, y: float) -> float:
+            return 1.0 - min(1.0, ((1.0 - x) ** w + (1.0 - y) ** w) ** (1.0 / w))
+
+        def F(z: float) -> float:
+            return reduce(op, (f(z) for f in funcs))
+
+        return F
+
+    return E
+
+
+def yager_OR(w: float) -> Callable[..., Membership]:
+    """Parametric Yager S-norm / T-conorm (OR variant) parameterized by w > 0.
+
+    Formula:
+        S_w(x, y) = min(1, (x^w + y^w)^(1/w))
+
+    As w -> inf, S_w -> max(x, y) (standard Zadeh OR).
+    When w = 1, S_1 -> min(1, x + y) (Lukasiewicz OR / bounded sum).
+    As w -> 0, S_w approaches drastic union.
+    """
+    if w <= 0:
+        raise ValueError(f"Parameter 'w' must be strictly positive (w > 0), got {w}")
+
+    def E(*guncs: Membership) -> Membership:
+        funcs = list(guncs)
+
+        def op(x: float, y: float) -> float:
+            return min(1.0, (x ** w + y ** w) ** (1.0 / w))
+
+        def F(z: float) -> float:
+            return reduce(op, (f(z) for f in funcs))
+
+        return F
+
+    return E
 
 
 def einstein_product(*guncs: Membership) -> Membership:
